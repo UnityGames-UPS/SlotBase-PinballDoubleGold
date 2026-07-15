@@ -1,0 +1,9 @@
+﻿<Solution>
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="com.Tivadar.Best.HTTP.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="com.Tivadar.Best.SocketIO.csproj" />
+  <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="com.Tivadar.Best.WebSockets.csproj" />
+  <Project Path="com.Tivadar.Best.HTTP.Profiler.Editor.csproj" />
+</Solution>
