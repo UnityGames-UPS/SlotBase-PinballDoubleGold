@@ -104,6 +104,15 @@ public class SlotBehaviour : MonoBehaviour
   [Header("Free Spin Trigger Anticipation")]
   [SerializeField] private float anticipationExtraSpinDuration = 1.5f;
 
+  [Header("Pinball Bonus Trigger")]
+  [SerializeField] private PinballBonusManager pinballBonusManager;
+  // One entry per payline (0..8); activated when that line holds the three id-11 Pinball symbols.
+  // Works whether each is a single image or a parent with child boxes/lines.
+  [SerializeField] private List<GameObject> PinballLineGraphics;
+  [SerializeField] private float pinballFlashDuration = 2f;
+  [SerializeField] private float pinballFlashHalfCycle = 0.3f;
+  [SerializeField] private float pinballFlashMinAlpha = 0.2f;
+
   [Header("Free Spin Special Reel")]
   [SerializeField] private GameObject SpecialReelObject;
   [SerializeField] private Transform SpecialReelTransform;
@@ -792,32 +801,15 @@ public class SlotBehaviour : MonoBehaviour
     }
 
     bool willTriggerFreeSpin = SocketManager.ResultData.features.freeSpin.isFreeSpin && !IsFreeSpin;
+    // Pinball bonus is authoritative from the backend flag (not from client scatter counting).
+    bool willTriggerPinball = SocketManager.ResultData.payload.features.pinball.triggered && !IsFreeSpin;
 
-    if (willTriggerFreeSpin && IsAutoSpin && AutoSpinRoutine != null)
+    if ((willTriggerFreeSpin || willTriggerPinball) && IsAutoSpin && AutoSpinRoutine != null)
     {
       StopCoroutine(AutoSpinRoutine);
       AutoSpinRoutine = null;
     }
 
-    // Precompute which reel (if any) contains the scatter that completes the count to 3,
-    // counting left-to-right across non-decorative rows only.
-    int specialScatterReelIndex = -1;
-    if (!IsFreeSpin)
-    {
-      int scatterTally = 0;
-      for (int col = 0; col < numberOfSlots; col++)
-      {
-        for (int row = 1; row < numberOfRows - 1; row++)
-        {
-          if (_displayMatrix[row, col] == 10)
-            scatterTally++;
-        }
-        if (specialScatterReelIndex == -1 && scatterTally >= 3)
-          specialScatterReelIndex = col;
-      }
-    }
-
-    bool lastReelPunched = false;
     for (int i = 0; i < numberOfSlots; i++)
     {
       if (IsFreeSpin && i == 1)
@@ -826,44 +818,14 @@ public class SlotBehaviour : MonoBehaviour
         StopReelSpin(SpecialReelTransform, SpecialReelIndex, SpecialReelTopY, SpecialReelRestY, specialReelSpeed);
       }
 
-      if (i == specialScatterReelIndex)
-      {
-        GameObject anticipationGlow = i == 1 ? MiddleReelGlow : (i == numberOfSlots - 1 ? LastReelGlow : null);
-        Debug.Log("[ScatterAnticipation DEBUG] Entering special reel " + i + ", setting glow ON");
-        if (anticipationGlow) anticipationGlow.SetActive(true);
-        uiManager.StartAnticipationZoom(anticipationExtraSpinDuration);
+      // On a pinball-trigger spin the last reel holds back and spins longer to build tension
+      // (PDG keeps the "last reel spins longer" beat from the old game, but drops the zoom/glow).
+      if (willTriggerPinball && i == numberOfSlots - 1)
         yield return new WaitForSeconds(anticipationExtraSpinDuration);
-        Debug.Log("[ScatterAnticipation DEBUG] Anticipation wait complete, stopping reel " + i);
-        yield return StopBaseReel(i);
-        Debug.Log("[ScatterAnticipation DEBUG] Reel stop complete, setting glow OFF");
-        if (anticipationGlow) anticipationGlow.SetActive(false);
-        Debug.Log("[ScatterAnticipation DEBUG] Glow set OFF successfully");
-      }
-      else
-      {
-        yield return StopBaseReel(i);
-        if (!IsFreeSpin && (specialScatterReelIndex == -1 || i < specialScatterReelIndex))
-        {
-          int reelScatterCount = 0;
-          for (int row = 1; row < numberOfRows - 1; row++)
-          {
-            if (_displayMatrix[row, i] == 10)
-              reelScatterCount++;
-          }
-          for (int p = 0; p < reelScatterCount; p++)
-            uiManager.ScatterAnticipationPunch();
-          if (reelScatterCount > 0 && i == numberOfSlots - 1)
-            lastReelPunched = true;
-        }
-      }
+
+      yield return StopBaseReel(i);
     }
 
-    if (!willTriggerFreeSpin)
-    {
-      if (lastReelPunched)
-        yield return new WaitForSeconds(0.2f);
-      uiManager.ResetAnticipationZoom();
-    }
     StopSpinToggle = false;
     // Base columns share a speed and start landing in order, so the last one finishes last.
     yield return reelTweens[numberOfSlots - 1].WaitForCompletion();
@@ -891,25 +853,6 @@ public class SlotBehaviour : MonoBehaviour
         }
       }
     }
-
-    bool anyScatter = false;
-    for (int row = 0; row < numberOfRows; row++)
-    {
-      for (int col = 0; col < numberOfSlots; col++)
-      {
-        if (_displayMatrix[row, col] == 10)
-        {
-          bool isDecorativeRow = row == 0 || row == numberOfRows - 1;
-          if (!isDecorativeRow)
-          {
-            if (!_animateAllSymbols)
-              StartGameAnimation(TempImages[col].slotImages[row].gameObject);
-            anyScatter = true;
-          }
-        }
-      }
-    }
-    if (anyScatter && audioController) audioController.PlayAllScatter();
 
     if (!IsFreeSpin && SocketManager.ResultData.payload.totalWin > 0)
     {
@@ -970,7 +913,12 @@ public class SlotBehaviour : MonoBehaviour
     CheckWinPopups();
 
     yield return new WaitUntil(() => !CheckPopups);
-    if (!IsAutoSpin && !IsFreeSpin && !willTriggerFreeSpin)
+    if (willTriggerPinball)
+    {
+      // Leave IsSpinning true and buttons disabled — the bonus manager owns game state from here
+      // and restores the base game via OnBonusComplete() when the feature ends.
+    }
+    else if (!IsAutoSpin && !IsFreeSpin && !willTriggerFreeSpin)
     {
       ToggleButtonGrp(true);
       IsSpinning = false;
@@ -980,6 +928,22 @@ public class SlotBehaviour : MonoBehaviour
       // yield return new WaitForSeconds(2f);
       IsSpinning = false;
     }
+
+    if (willTriggerPinball)
+    {
+      // Clear any lingering base win animation so it doesn't play under the transition fade.
+      uiManager.SkipWinSequences();
+      // Flash the winning pinball line(s), then hand off to the bonus manager, which runs the
+      // base->bonus transition and the per-press shot loop.
+      List<int> pinballLines = FindPinballLines();
+      yield return StartCoroutine(FlashPinballTrigger(pinballLines));
+      int startShots = SocketManager.ResultData.payload.features.pinball.shotsRemaining;
+      if (pinballBonusManager)
+        pinballBonusManager.BeginBonus(startShots, BetCounter, currentTotalBet);
+      else
+        Debug.LogWarning("[PinballBonus] pinballBonusManager reference not assigned — cannot start the bonus.");
+    }
+
     if (willTriggerFreeSpin)
     {
       if (audioController) audioController.PlayScatterFreeSpin();
@@ -1061,7 +1025,7 @@ public class SlotBehaviour : MonoBehaviour
       bool pureWild = true;
       for (int col = 0; col < rows.Count; col++)
       {
-        int symbolId = _displayMatrix[rows[col], col];
+        int symbolId = _displayMatrix[PaddedRow(rows[col]), col];
         if (symbolId < 6 || symbolId > 9) { pureWild = false; break; }
       }
       if (pureWild) return true;
@@ -1073,6 +1037,96 @@ public class SlotBehaviour : MonoBehaviour
   {
     CheckPopups = false;
   }
+
+  #region PinballBonusTrigger
+  // Backend paylines are indexed against the 3 real reel rows (0..2), but the client renders a
+  // padded 5-row layout with the real rows at 1..3 (rows 0/4 are decorative, synthesized in
+  // BuildDisplayMatrix). So a backend line row maps to _displayMatrix / slotImages row +1.
+  // Used by the pinball-trigger scan/flash and by the base-game win highlight
+  // (CheckPayoutLineBackend, CheckAnyPureWildLine).
+  private int PaddedRow(int backendLineRow) => backendLineRow + 1;
+
+  // Returns every active payline whose three positions all hold the Pinball symbol (id 11).
+  // Normally one line; all matches are returned so the caller can flash them all (multi-line
+  // behaviour pending team-lead confirmation).
+  private List<int> FindPinballLines()
+  {
+    List<int> result = new();
+    var lines = SocketManager.InitialData.lines;
+    for (int li = 0; li < lines.Count; li++)
+    {
+      var rows = lines[li];
+      bool allPinball = true;
+      for (int col = 0; col < rows.Count; col++)
+      {
+        if (_displayMatrix[PaddedRow(rows[col]), col] != 11) { allPinball = false; break; }
+      }
+      if (allPinball) result.Add(li);
+    }
+    return result;
+  }
+
+  // Flashes the winning pinball line graphic(s) and the id-11 symbols on those lines (alpha
+  // fade in/out) for ~pinballFlashDuration, then restores them, before the bonus transition.
+  private IEnumerator FlashPinballTrigger(List<int> lines)
+  {
+    if (lines == null || lines.Count == 0)
+    {
+      Debug.LogWarning("[PinballBonus] Backend triggered the bonus but no active line has three id-11 symbols — skipping flash.");
+      yield break;
+    }
+
+    List<Image> symbolImages = new();
+    List<CanvasGroup> lineGroups = new();
+
+    foreach (int line in lines)
+    {
+      if (PinballLineGraphics != null && line >= 0 && line < PinballLineGraphics.Count && PinballLineGraphics[line])
+      {
+        GameObject g = PinballLineGraphics[line];
+        g.SetActive(true);
+        CanvasGroup cg = g.GetComponent<CanvasGroup>();
+        if (!cg) cg = g.AddComponent<CanvasGroup>();
+        lineGroups.Add(cg);
+      }
+      var rows = SocketManager.InitialData.lines[line];
+      for (int col = 0; col < numberOfSlots; col++)
+      {
+        Image img = TempImages[col].slotImages[PaddedRow(rows[col])];
+        if (img && !symbolImages.Contains(img)) symbolImages.Add(img);
+      }
+    }
+
+    // Yoyo fade for the flash window; even loop count returns targets to full alpha.
+    int halfCycles = Mathf.Max(2, Mathf.RoundToInt(pinballFlashDuration / pinballFlashHalfCycle));
+    if (halfCycles % 2 != 0) halfCycles++;
+    foreach (Image img in symbolImages)
+      img.DOFade(pinballFlashMinAlpha, pinballFlashHalfCycle).SetLoops(halfCycles, LoopType.Yoyo);
+    foreach (CanvasGroup cg in lineGroups)
+      cg.DOFade(pinballFlashMinAlpha, pinballFlashHalfCycle).SetLoops(halfCycles, LoopType.Yoyo);
+
+    yield return new WaitForSeconds(halfCycles * pinballFlashHalfCycle);
+
+    // Restore and clean up so nothing lingers when the machine scrolls away / back.
+    foreach (Image img in symbolImages) { img.DOKill(); Color c = img.color; c.a = 1f; img.color = c; }
+    foreach (CanvasGroup cg in lineGroups) { cg.DOKill(); cg.alpha = 1f; }
+    foreach (int line in lines)
+      if (PinballLineGraphics != null && line >= 0 && line < PinballLineGraphics.Count && PinballLineGraphics[line])
+        PinballLineGraphics[line].SetActive(false);
+  }
+
+  // Called by PinballBonusManager once the feature ends and the machine has scrolled back in.
+  // Backend already credited the balance on the isOver shot, so just resync and re-enable play.
+  internal void OnBonusComplete()
+  {
+    currentBalance = SocketManager.PlayerData.balance;
+    if (Balance_text) Balance_text.text = SocketManager.PlayerData.balance.ToString("F3");
+    if (TotalWin_text) TotalWin_text.text = "0.000";
+    IsSpinning = false;
+    ToggleButtonGrp(true);
+    CompareBalance();
+  }
+  #endregion
 
   // Column 1 is visually replaced by the special wilds reel during free spins, so its symbol animations
   // must target the special reel's own images rather than the hidden middle reel's.
@@ -1158,7 +1212,8 @@ public class SlotBehaviour : MonoBehaviour
           List<KeyValuePair<int, int>> coords = new();
           for (int k = 0; k < SocketManager.ResultData.payload.winningLines[j].positions.Count; k++)
           {
-            int rowIndex = SocketManager.InitialData.lines[LineId[j]][k];
+            // Backend line rows are 0..2 (active rows only); the padded display puts them at 1..3.
+            int rowIndex = PaddedRow(SocketManager.InitialData.lines[LineId[j]][k]);
             int columnIndex = k;
             coords.Add(new KeyValuePair<int, int>(rowIndex, columnIndex));
           }

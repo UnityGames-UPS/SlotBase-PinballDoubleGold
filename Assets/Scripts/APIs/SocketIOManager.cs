@@ -407,6 +407,20 @@ private void OnError(Error err)
     SendDataWithNamespace("request", json);
   }
 
+  // Fires a single pinball-bonus shot. Identical request shape to a spin, but type "BONUS" —
+  // the backend replies on the same "result"/"ResultData" channel with the bonus payload
+  // (bonusWin/isOver/selectedIndex/isSpecial/bonusState) instead of the spin payload.
+  internal void AccumulateBonusResult(int currBet)
+  {
+    isResultdone = false;
+    MessageData message = new();
+    message.type = "BONUS";
+    message.payload.betIndex = currBet;
+
+    string json = JsonUtility.ToJson(message);
+    SendDataWithNamespace("request", json);
+  }
+
   private List<string> ConvertListListIntToListString(List<List<int>> listOfLists)
   {
     List<string> resultList = new List<string>();
@@ -494,11 +508,20 @@ public class Jackpot
 [Serializable]
 public class Payload
 {
-  // SL-PDG live result payload fields:
+  // SL-PDG live result payload fields (SPIN):
   public List<List<string>> reels { get; set; }
   public List<WinningLine> winningLines { get; set; }
   public double totalWin { get; set; }
   public ResultFeatures features { get; set; } = new ResultFeatures();
+
+  // SL-PDG pinball-BONUS result fields. Arrive on the same envelope as a spin result; they stay
+  // default on SPIN payloads and the SPIN fields stay default on BONUS payloads (Newtonsoft leaves
+  // absent fields at their defaults). See pdg-backend-clarifications for the field semantics.
+  public double bonusWin { get; set; }         // this shot's award (money)
+  public bool isOver { get; set; }             // feature-complete flag (end signal)
+  public int selectedIndex { get; set; }       // prize index: prizes[] normally, specialPrizes[] when isSpecial
+  public bool isSpecial { get; set; }          // hit a +shot special pocket
+  public BonusState bonusState { get; set; } = new BonusState();
 
   // Old SL-TXT-only fields, kept + default-initialized for the same reason as Features above:
   // the still-in-place free-spin/wild logic in SlotBehaviour.cs reads these and must not crash.
@@ -508,6 +531,14 @@ public class Payload
   public bool isFreeSpinActive { get; set; }
   public int freeSpinsAwarded { get; set; }
   public double totalFreeSpinWin { get; set; }
+}
+
+[Serializable]
+public class BonusState
+{
+  public int shotsRemaining { get; set; }      // authoritative post-shot count (already nets extraShots)
+  public double totalBonusWin { get; set; }    // running feature total; credited to balance on isOver
+  public int extraShots { get; set; }          // extra shots granted by this shot (special pockets)
 }
 
 [Serializable]
@@ -530,6 +561,7 @@ public class ResultFeatures
 public class PinballTriggerInfo
 {
   public bool triggered { get; set; }
+  public int shotsRemaining { get; set; }      // starting shot count, present on the triggering spin
 }
 
 [Serializable]
