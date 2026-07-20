@@ -762,8 +762,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -28.418}
-  m_SizeDelta: {x: 1290.2, y: 533.1}
+  m_AnchoredPosition: {x: 0, y: -48.9}
+  m_SizeDelta: {x: 1291.64, y: 463.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &65837301
 MonoBehaviour:
@@ -8610,7 +8610,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 320, y: 3393.2}
+  m_AnchoredPosition: {x: 450, y: 3393.2}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &790847358
@@ -13520,8 +13520,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -2.5, y: -53.7}
-  m_SizeDelta: {x: 1295, y: 467}
+  m_AnchoredPosition: {x: 1.22, y: -57.86}
+  m_SizeDelta: {x: 1295, y: 475.29}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1300342244
 MonoBehaviour:
@@ -20208,7 +20208,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -315, y: 3393.2}
+  m_AnchoredPosition: {x: -450, y: 3393.2}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2021576366
@@ -20787,16 +20787,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlotBehaviour
   myImages:
   - {fileID: 21300000, guid: 9c6b8b4c7daa5ee408ad6753d9aebea5, type: 3}
-  - {fileID: 21300000, guid: 2a0b1630ed464f24086ff88e2a8f167f, type: 3}
-  - {fileID: 21300000, guid: 7c89b79fa0e78574aae6896639172526, type: 3}
-  - {fileID: 21300000, guid: 992ae067f5dbf3f40baf36b188e57352, type: 3}
-  - {fileID: 21300000, guid: bda3e5d6c4189864cb0cb0614a7170d7, type: 3}
-  - {fileID: 21300000, guid: 27b4cb9a9fd5fcd4690974ba4bcedc0d, type: 3}
-  - {fileID: 21300000, guid: 7ba33fffb701b0d4aace3f4561f9f086, type: 3}
-  - {fileID: 21300000, guid: ceea0bfa957c450449e256c59af0857f, type: 3}
-  - {fileID: 21300000, guid: 9185c03960d2e564b82d4f965184d1ff, type: 3}
-  - {fileID: 21300000, guid: 913a51aab1c94824dbe84ee6a662a821, type: 3}
-  - {fileID: 21300000, guid: 9666e54a0830f8a4f9b1e6162882ddbb, type: 3}
+  - {fileID: -55111174514293551, guid: 9cc56ca621f400d46b529938576a2e12, type: 3}
+  - {fileID: 6259149649726940746, guid: c135d0849d4b9ed4a80db4289d0f7609, type: 3}
+  - {fileID: -65692829487229199, guid: 5096956267f05714bb77c3242cc9e811, type: 3}
+  - {fileID: -7020946474139277862, guid: 8000e10a2cb1d5a4dbb987102db12169, type: 3}
+  - {fileID: 3737897332693287829, guid: 84091748d66ccc6438b7174cdb8736bc, type: 3}
+  - {fileID: 44446818427865800, guid: 540ca61644631b54893126b9769c0960, type: 3}
+  - {fileID: -4622003345681055979, guid: db6639fa3e9501d469952b5062c22525, type: 3}
+  - {fileID: -6098335900119722868, guid: 0be5a39908e13bb4e8244202ef81bbdb, type: 3}
+  - {fileID: -3049750657755692501, guid: 17ed8d6a35a8171489905b51ebbcb28b, type: 3}
+  - {fileID: 1376566682498581930, guid: 439d9b693857e4549aac8955931e49fb, type: 3}
   TempImages:
   - slotImages:
     - {fileID: 765851747}

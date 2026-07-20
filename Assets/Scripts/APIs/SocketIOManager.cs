@@ -464,9 +464,8 @@ public class FreeSpins
 public class Root
 {
   public bool success { get; set; }
-  public List<List<string>> matrix { get; set; }
   public Payload payload { get; set; }
-  public Features features { get; set; }
+  public Features features { get; set; } = new Features();
   //Initial Data
   public string id { get; set; }
   public GameData gameData { get; set; }
@@ -474,11 +473,15 @@ public class Root
   public Player player { get; set; }
 }
 
+// SL-PDG's live payload has no freeSpin/jackpot data at all (old SL-TXT-only mechanics).
+// freeSpin/jackpot are kept + default-initialized here only so the still-in-place old
+// free-spin/wild/jackpot logic in SlotBehaviour.cs keeps compiling and stays safely inert
+// (always false/zero) instead of null-reference-crashing every spin.
 [Serializable]
 public class Features
 {
-  public FreeSpins freeSpin { get; set; }
-  public Jackpot jackpot { get; set; }
+  public FreeSpins freeSpin { get; set; } = new FreeSpins();
+  public Jackpot jackpot { get; set; } = new Jackpot();
 }
 
 [Serializable]
@@ -491,12 +494,42 @@ public class Jackpot
 [Serializable]
 public class Payload
 {
+  // SL-PDG live result payload fields:
+  public List<List<string>> reels { get; set; }
+  public List<WinningLine> winningLines { get; set; }
+  public double totalWin { get; set; }
+  public ResultFeatures features { get; set; } = new ResultFeatures();
+
+  // Old SL-TXT-only fields, kept + default-initialized for the same reason as Features above:
+  // the still-in-place free-spin/wild logic in SlotBehaviour.cs reads these and must not crash.
   public double winAmount { get; set; }
   public List<Win> wins { get; set; }
   public int freeSpinsRemaining { get; set; }
   public bool isFreeSpinActive { get; set; }
   public int freeSpinsAwarded { get; set; }
   public double totalFreeSpinWin { get; set; }
+}
+
+[Serializable]
+public class WinningLine
+{
+  public int lineIndex { get; set; }
+  public double payout { get; set; }
+  public List<List<int>> positions { get; set; }
+  public double doubleMultiplier { get; set; }
+  public int doubleCount { get; set; }
+}
+
+[Serializable]
+public class ResultFeatures
+{
+  public PinballTriggerInfo pinball { get; set; } = new PinballTriggerInfo();
+}
+
+[Serializable]
+public class PinballTriggerInfo
+{
+  public bool triggered { get; set; }
 }
 
 [Serializable]
@@ -526,8 +559,9 @@ public class Symbol
 {
   public int id { get; set; }
   public string name { get; set; }
-  public List<double> multiplier { get; set; }
+  public double payout { get; set; }
   public string description { get; set; }
+  public string group { get; set; }
 }
 
 [Serializable]
