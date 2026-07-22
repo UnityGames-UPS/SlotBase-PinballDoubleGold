@@ -22,11 +22,12 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private SlotBehaviour slotBehaviour;
 
   [Header("Transition (scroll base machine out, bonus UI in)")]
-  // Container holding the machine (at y 0) and the bonus UI (one screen above). Scrolling it down
-  // by scrollDistance sends the machine off the bottom and brings the bonus UI to centre.
-  [SerializeField] private RectTransform scrollContainer;
-  [SerializeField] private CanvasGroup baseGameUI;       // surrounding base UI that fades out (not the machine)
-  [SerializeField] private CanvasGroup bonusDecorations; // ring/ships/marbles/counters that fade in after scroll
+  // Sibling movers: gameContentRoot (the base machine, GameContent) scrolls down/out while
+  // pinballSpecialUI scrolls in from one screen above. Two synced tweens, same duration + ease.
+  [SerializeField] private RectTransform gameContentRoot;   // = GameContent; scrolls down (machine visible, faded base UI rides along)
+  [SerializeField] private RectTransform pinballSpecialUI;  // = PinballSpecialUI root; scrolls in from the top
+  [SerializeField] private CanvasGroup baseGameUI;          // wrapper around the surrounding base UI that fades out (not the machine)
+  [SerializeField] private CanvasGroup bonusDecorations;    // ring/ships/marbles/counters that fade in after scroll
   [SerializeField] private float scrollDistance = 1080f;
   [SerializeField] private float scrollDuration = 1f;
   [SerializeField] private Ease scrollEase = Ease.InOutCubic;
@@ -34,22 +35,24 @@ public class PinballBonusManager : MonoBehaviour
 
   [Header("Controls & Displays")]
   [SerializeField] private Button shootButton;
-  [SerializeField] private TMP_Text shotsText;
-  [SerializeField] private TMP_Text bonusWinText;
-  [SerializeField] private TMP_Text totalBetText;
+  [SerializeField] private TMP_Text shotsAmount;
+  [SerializeField] private TMP_Text bonusWinAmount;
+  [SerializeField] private TMP_Text totalBetAmount;
 
-  [Header("Ring")]
-  // Ordered path circles the ball travels through (outer loop then inner layer). The animation
-  // lights them in sequence to convey the ball moving.
-  [SerializeField] private List<GameObject> pathCircleLights;
-  // Destination pockets keyed to the backend prize lists: prizePockets[selectedIndex] normally,
-  // specialPockets[selectedIndex] when payload.isSpecial. Sizes should match prizes[]/specialPrizes[].
-  [SerializeField] private List<PinballPocket> prizePockets;
-  [SerializeField] private List<PinballPocket> specialPockets;
+  [Header("Ring — Movement Path")]
+  // The circles the ball travels through, in order (outer loop -> inner layer -> toward marbles).
+  // Lit one after another to convey the ball moving.
+  [SerializeField] private List<PathCircle> pathCircles;
+
+  [Header("Ring — Prizes (UFOs + marbles)")]
+  // Every prize the ball can land on. Matched to a shot by isSpecial + prizeIndex; stopAtCircleIndex
+  // says which pathCircles index the ball rests at before landing here.
+  [SerializeField] private List<Prize> prizes;
 
   [Header("Ring Animation Timing")]
   [SerializeField] private float perCircleLightDuration = 0.05f;
-  [SerializeField] private float pocketHighlightDuration = 0.9f;
+  [SerializeField] private int prizeFlashCount = 4;
+  [SerializeField] private float prizeFlashHalfCycle = 0.15f;
   [SerializeField] private float endHoldDuration = 1.5f;
 
   // Runtime state
@@ -58,7 +61,9 @@ public class PinballBonusManager : MonoBehaviour
   private int _shotsRemaining;
   private bool _featureActive;
   private bool _shotInFlight;
-  private float _scrollHomeY;
+  private bool _homesCaptured;
+  private float _gameContentHomeY;
+  private float _specialHomeY;
 
   private void Awake()
   {
@@ -85,9 +90,10 @@ public class PinballBonusManager : MonoBehaviour
 
   private IEnumerator BeginBonusRoutine()
   {
-    UpdateShotsText(_shotsRemaining);
-    UpdateBonusWinText(0);
-    if (totalBetText) totalBetText.text = _totalBet.ToString("F2");
+    UpdateShotsAmount(_shotsRemaining);
+    UpdateBonusWinAmount(0);
+    if (totalBetAmount) totalBetAmount.text = _totalBet.ToString("F2");
+    RefreshPrizeLabels();
     ClearAllLights();
     SetShootInteractable(false);
 
@@ -134,8 +140,8 @@ public class PinballBonusManager : MonoBehaviour
 
     // Trust the backend's post-shot state for the displays and the next enable/disable decision.
     _shotsRemaining = p.bonusState.shotsRemaining;
-    UpdateShotsText(_shotsRemaining);
-    UpdateBonusWinText(p.bonusState.totalBonusWin);
+    UpdateShotsAmount(_shotsRemaining);
+    UpdateBonusWinAmount(p.bonusState.totalBonusWin);
 
     _shotInFlight = false;
 
@@ -147,59 +153,99 @@ public class PinballBonusManager : MonoBehaviour
   #endregion
 
   #region Ring animation
-  // Lights path circles in sequence up to the destination pocket's rest position, then highlights
-  // the pocket. Backend gives only the destination (isSpecial + selectedIndex); the traversal is
-  // synthesized here.
+  // Lights the path circles in order up to the destination prize, then flashes that prize. Backend
+  // gives only the destination (isSpecial + selectedIndex); the traversal is synthesized here.
   private IEnumerator AnimateShot(bool isSpecial, int selectedIndex)
   {
-    PinballPocket dest = GetPocket(isSpecial, selectedIndex);
-    int stop = (dest != null && pathCircleLights != null && dest.ringStopIndex >= 0)
-      ? Mathf.Min(dest.ringStopIndex, pathCircleLights.Count - 1)
-      : (pathCircleLights != null ? pathCircleLights.Count - 1 : -1);
+    Prize dest = FindPrize(isSpecial, selectedIndex);
+    int lastCircle = pathCircles != null ? pathCircles.Count - 1 : -1;
+    int stop = dest != null ? Mathf.Clamp(dest.stopAtCircleIndex, 0, lastCircle) : lastCircle;
 
+    // Ball moving: single travelling light along the circles.
     for (int i = 0; i <= stop; i++)
     {
-      SetLight(i, true);
+      SetCircleLit(i, true);
       yield return new WaitForSeconds(perCircleLightDuration);
-      if (i < stop) SetLight(i, false); // single moving light reads as the ball travelling
+      if (i < stop) SetCircleLit(i, false);
     }
+    if (stop >= 0) SetCircleLit(stop, false);
 
-    if (dest != null && dest.highlight) dest.highlight.SetActive(true);
-    yield return new WaitForSeconds(pocketHighlightDuration);
-
-    ClearAllLights();
-    if (dest != null && dest.highlight) dest.highlight.SetActive(false);
+    // Ball landed: flash the prize its own way.
+    if (dest != null) yield return StartCoroutine(FlashPrize(dest));
   }
 
-  private PinballPocket GetPocket(bool isSpecial, int index)
+  // The prize whose isSpecial + prizeIndex match the shot result.
+  private Prize FindPrize(bool isSpecial, int selectedIndex)
   {
-    List<PinballPocket> pockets = isSpecial ? specialPockets : prizePockets;
-    if (pockets == null || index < 0 || index >= pockets.Count)
+    if (prizes != null)
+      foreach (Prize p in prizes)
+        if (p != null && p.isSpecial == isSpecial && p.prizeIndex == selectedIndex)
+          return p;
+    Debug.LogWarning($"[PinballBonus] No prize wired for isSpecial={isSpecial}, selectedIndex={selectedIndex}.");
+    return null;
+  }
+
+  private IEnumerator FlashPrize(Prize prize)
+  {
+    if (prize == null || prize.image == null) yield break;
+    for (int i = 0; i < prizeFlashCount; i++)
     {
-      Debug.LogWarning($"[PinballBonus] No pocket wired for isSpecial={isSpecial}, selectedIndex={index} — ball will stop at the ring end.");
-      return null;
+      if (prize.highlightSprite) prize.image.sprite = prize.highlightSprite;
+      yield return new WaitForSeconds(prizeFlashHalfCycle);
+      if (prize.baseSprite) prize.image.sprite = prize.baseSprite;
+      yield return new WaitForSeconds(prizeFlashHalfCycle);
     }
-    return pockets[index];
   }
 
-  private void SetLight(int index, bool on)
+  private void SetCircleLit(int index, bool on)
   {
-    if (pathCircleLights != null && index >= 0 && index < pathCircleLights.Count && pathCircleLights[index])
-      pathCircleLights[index].SetActive(on);
+    if (pathCircles == null || index < 0 || index >= pathCircles.Count) return;
+    PathCircle c = pathCircles[index];
+    if (c != null && c.image) c.image.sprite = on ? c.litSprite : c.unlitSprite;
   }
 
   private void ClearAllLights()
   {
-    if (pathCircleLights == null) return;
-    foreach (GameObject light in pathCircleLights)
-      if (light) light.SetActive(false);
+    if (pathCircles != null)
+      foreach (PathCircle c in pathCircles)
+        if (c != null && c.image) c.image.sprite = c.unlitSprite;
+    if (prizes != null)
+      foreach (Prize p in prizes)
+        if (p != null && p.image && p.baseSprite) p.image.sprite = p.baseSprite;
+  }
+
+  // Prize point values shown on the ships/marbles are bet-dependent and set at runtime here.
+  // Base values are available via socketManager.GameFeatures.pinball.prizes / specialPrizes
+  // (prizes[prizeIndex] for normal prizes, specialPrizes[prizeIndex].prize for special ones).
+  // TODO(pinball): apply the bet-scaling factor once known, e.g.:
+  //   PinballConfig cfg = socketManager?.GameFeatures?.pinball;
+  //   foreach prize with a pointsAmount:
+  //     int base = prize.isSpecial ? cfg.specialPrizes[prize.prizeIndex].prize
+  //                                : cfg.prizes[prize.prizeIndex];
+  //     prize.pointsAmount.text = (base * BetScaleFactor(_betIndex)).ToString();
+  private void RefreshPrizeLabels()
+  {
   }
   #endregion
 
   #region Transition
   private IEnumerator TransitionToBonus()
   {
-    if (scrollContainer) _scrollHomeY = scrollContainer.anchoredPosition.y;
+    // The bonus UI is deactivated + hidden by default; turn it on before moving it.
+    if (pinballSpecialUI) pinballSpecialUI.gameObject.SetActive(true);
+
+    // Capture the on-screen resting positions once, before anything moves, so repeat bonuses
+    // don't re-read a parked/off-screen position as "home".
+    if (!_homesCaptured)
+    {
+      if (gameContentRoot) _gameContentHomeY = gameContentRoot.anchoredPosition.y;
+      if (pinballSpecialUI) _specialHomeY = pinballSpecialUI.anchoredPosition.y;
+      _homesCaptured = true;
+    }
+
+    // Park the bonus UI one screen above its resting spot, ready to scroll in.
+    if (pinballSpecialUI)
+      pinballSpecialUI.anchoredPosition = new Vector2(pinballSpecialUI.anchoredPosition.x, _specialHomeY + scrollDistance);
     if (bonusDecorations) bonusDecorations.alpha = 0f;
 
     if (baseGameUI)
@@ -209,9 +255,15 @@ public class PinballBonusManager : MonoBehaviour
       baseGameUI.blocksRaycasts = false;
     }
 
-    if (scrollContainer)
-      yield return scrollContainer.DOAnchorPosY(_scrollHomeY - scrollDistance, scrollDuration)
-        .SetEase(scrollEase).WaitForCompletion();
+    // Machine scrolls down/out and the bonus UI scrolls in — two synced tweens, wait on the longer-lived one.
+    Tween machineTween = gameContentRoot
+      ? gameContentRoot.DOAnchorPosY(_gameContentHomeY - scrollDistance, scrollDuration).SetEase(scrollEase)
+      : null;
+    Tween specialTween = pinballSpecialUI
+      ? pinballSpecialUI.DOAnchorPosY(_specialHomeY, scrollDuration).SetEase(scrollEase)
+      : null;
+    if (specialTween != null) yield return specialTween.WaitForCompletion();
+    else if (machineTween != null) yield return machineTween.WaitForCompletion();
 
     if (bonusDecorations)
     {
@@ -230,9 +282,14 @@ public class PinballBonusManager : MonoBehaviour
       bonusDecorations.interactable = false;
     }
 
-    if (scrollContainer)
-      yield return scrollContainer.DOAnchorPosY(_scrollHomeY, scrollDuration)
-        .SetEase(scrollEase).WaitForCompletion();
+    Tween machineTween = gameContentRoot
+      ? gameContentRoot.DOAnchorPosY(_gameContentHomeY, scrollDuration).SetEase(scrollEase)
+      : null;
+    Tween specialTween = pinballSpecialUI
+      ? pinballSpecialUI.DOAnchorPosY(_specialHomeY + scrollDistance, scrollDuration).SetEase(scrollEase)
+      : null;
+    if (specialTween != null) yield return specialTween.WaitForCompletion();
+    else if (machineTween != null) yield return machineTween.WaitForCompletion();
 
     if (baseGameUI)
     {
@@ -240,6 +297,9 @@ public class PinballBonusManager : MonoBehaviour
       baseGameUI.blocksRaycasts = true;
       yield return baseGameUI.DOFade(1f, fadeDuration).WaitForCompletion();
     }
+
+    // Hide the bonus UI again now that it's parked off-screen.
+    if (pinballSpecialUI) pinballSpecialUI.gameObject.SetActive(false);
   }
   #endregion
 
@@ -249,24 +309,37 @@ public class PinballBonusManager : MonoBehaviour
     if (shootButton) shootButton.interactable = on;
   }
 
-  private void UpdateShotsText(int shots)
+  private void UpdateShotsAmount(int shots)
   {
-    if (shotsText) shotsText.text = shots.ToString();
+    if (shotsAmount) shotsAmount.text = shots.ToString();
   }
 
-  private void UpdateBonusWinText(double amount)
+  private void UpdateBonusWinAmount(double amount)
   {
-    if (bonusWinText) bonusWinText.text = amount.ToString("F2");
+    if (bonusWinAmount) bonusWinAmount.text = amount.ToString("F2");
   }
   #endregion
 }
 
-// One destination pocket (ship or marble) the ball can land in. Keyed positionally to the backend
-// prize lists; ringStopIndex is where along pathCircleLights the ball comes to rest at this pocket.
+// One movement circle. Lit in sequence to convey the ball travelling; sprite swap on its Image.
 [System.Serializable]
-public class PinballPocket
+public class PathCircle
 {
-  public GameObject highlight;   // lit overlay shown when the ball lands here
-  public int ringStopIndex = -1; // index into pathCircleLights for the ball's resting spot
-  public TMP_Text pointsText;    // optional static points label (display = 100x money)
+  public Image image;
+  public Sprite litSprite;
+  public Sprite unlitSprite;
+}
+
+// One prize the ball can land on — a UFO or a marble (same class; isSpecial flags the "+1 Shot" UFOs).
+// Matched to a shot by isSpecial + prizeIndex.
+[System.Serializable]
+public class Prize
+{
+  public Image image;                   // the prize's Image; sprite swapped between base/highlight when it flashes
+  public Sprite baseSprite;
+  public Sprite highlightSprite;
+  public bool isSpecial;                // true = a "+1 Shot" pocket (backend isSpecial)
+  public int prizeIndex = -1;           // the backend selectedIndex this prize pays
+  public TMP_Text pointsAmount;         // runtime-set, bet-dependent points label
+  public int stopAtCircleIndex = -1;    // which pathCircles index the ball rests at before landing here
 }

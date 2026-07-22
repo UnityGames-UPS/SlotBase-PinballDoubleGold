@@ -54,31 +54,7 @@ public class SlotBehaviour : MonoBehaviour
   [SerializeField] private Sprite AutoSpinIdleSprite;
   [SerializeField] private Sprite AutoSpinActiveSprite;
 
-  [Header("Animated Sprites")]
-  [SerializeField]
-  private Sprite[] Blank_Sprite;
-  [SerializeField]
-  private Sprite[] SingleBar_Sprite;
-  [SerializeField]
-  private Sprite[] DoubleBar_Sprite;
-  [SerializeField]
-  private Sprite[] TripleBar_Sprite;
-  [SerializeField]
-  private Sprite[] Bell_Sprite;
-  [SerializeField]
-  private Sprite[] Red7_Sprite;
-  [SerializeField]
-  private Sprite[] Wild2x_Sprite;
-  [SerializeField]
-  private Sprite[] Wild3x_Sprite;
-  [SerializeField]
-  private Sprite[] Wild5x_Sprite;
-  [SerializeField]
-  private Sprite[] Wild10x_Sprite;
-  [SerializeField]
-  private Sprite[] Scatter_Sprite;
-  [SerializeField]
-  private Sprite[] ScatterTrigger_Sprite;
+  // Fixed display size applied to each slot image when its sprite is set.
   private static readonly Vector2 ScatterSymbolBaseSize = new Vector2(250f, 300f);
 
   [Header("Debug")]
@@ -86,7 +62,7 @@ public class SlotBehaviour : MonoBehaviour
 
   [Header("Miscellaneous UI")]
   [SerializeField]
-  private TMP_Text Balance_text;
+  private TMP_Text BalanceAmount;
   [SerializeField]
   private TMP_Text TotalBet_text;
   [SerializeField]
@@ -513,20 +489,7 @@ public class SlotBehaviour : MonoBehaviour
       for (int col = 0; col < initialMatrix.GetLength(1); col++)
       {
         int val = initialMatrix[row, col];
-
         TempImages[col].slotImages[row].sprite = myImages[val];
-
-        ImageAnimation animScript = TempImages[col].slotImages[row].GetComponent<ImageAnimation>();
-        if (animScript != null)
-        {
-          PopulateAnimationSprites(animScript, val);
-
-          if (val != 10)
-          {
-            animScript.StartAnimation();
-            TempList.Add(animScript);
-          }
-        }
       }
     }
   }
@@ -540,7 +503,7 @@ public class SlotBehaviour : MonoBehaviour
     if (LineBet_text) LineBet_text.text = SocketManager.InitialData.bets[BetCounter].ToString();
     if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * Lines).ToString();
     if (TotalWin_text) TotalWin_text.text = "0.000";
-    if (Balance_text) Balance_text.text = SocketManager.PlayerData.balance.ToString("F3");
+    if (BalanceAmount) BalanceAmount.text = SocketManager.PlayerData.balance.ToString("F3");
     currentBalance = SocketManager.PlayerData.balance;
     currentTotalBet = SocketManager.InitialData.bets[BetCounter] * Lines;
     CompareBalance();
@@ -551,93 +514,6 @@ public class SlotBehaviour : MonoBehaviour
 
   private void OnApplicationFocus(bool focus)
   {
-  }
-
-  //function to populate animation sprites accordingly
-  private void PopulateAnimationSprites(ImageAnimation animScript, int val)
-  {
-    animScript.textureArray.Clear();
-    animScript.textureArray.TrimExcess();
-    switch (val)
-    {
-      case 0:
-        for (int i = 0; i < Blank_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Blank_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 12f;
-        break;
-      case 1:
-        for (int i = 0; i < SingleBar_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(SingleBar_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 12f;
-        break;
-      case 2:
-        for (int i = 0; i < DoubleBar_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(DoubleBar_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 12f;
-        break;
-      case 3:
-        for (int i = 0; i < TripleBar_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(TripleBar_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 12f;
-        break;
-      case 4:
-        for (int i = 0; i < Bell_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Bell_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 12f;
-        break;
-      case 5:
-        for (int i = 0; i < Red7_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Red7_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 12f;
-        break;
-      case 6:
-        for (int i = 0; i < Wild2x_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Wild2x_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 30f;
-        break;
-      case 7:
-        for (int i = 0; i < Wild3x_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Wild3x_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 30f;
-        break;
-      case 8:
-        for (int i = 0; i < Wild5x_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Wild5x_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 30f;
-        break;
-      case 9:
-        for (int i = 0; i < Wild10x_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Wild10x_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 30f;
-        break;
-      case 10:
-        for (int i = 0; i < Scatter_Sprite.Length; i++)
-        {
-          animScript.textureArray.Add(Scatter_Sprite[i]);
-        }
-        animScript.AnimationSpeed = 30f;
-        break;
-    }
   }
 
   #region SlotSpin
@@ -755,13 +631,6 @@ public class SlotBehaviour : MonoBehaviour
         if (IsFreeSpin && j == 1) continue;
 
         int resultNum = _displayMatrix[i, j];
-        // print("resultNum: " + resultNum);
-        // print("image loc: " + j + " " + i);
-        ImageAnimation animScript = TempImages[j].slotImages[i].GetComponent<ImageAnimation>();
-        if (animScript != null)
-        {
-          PopulateAnimationSprites(animScript, resultNum);
-        }
         TempImages[j].slotImages[i].sprite = myImages[resultNum];
         TempImages[j].slotImages[i].rectTransform.sizeDelta = ScatterSymbolBaseSize;
       }
@@ -772,11 +641,6 @@ public class SlotBehaviour : MonoBehaviour
       for (int row = 0; row < numberOfRows && row < SpecialReelSlotImages.slotImages.Count; row++)
       {
         int resultNum = _displayMatrix[row, 1];
-        ImageAnimation specialAnimScript = SpecialReelSlotImages.slotImages[row].GetComponent<ImageAnimation>();
-        if (specialAnimScript != null)
-        {
-          PopulateAnimationSprites(specialAnimScript, resultNum);
-        }
         SpecialReelSlotImages.slotImages[row].sprite = myImages[resultNum];
       }
     }
@@ -886,7 +750,7 @@ public class SlotBehaviour : MonoBehaviour
       TotalWin_text.text = displayWin.ToString("F3");
     }
     BalanceTween?.Kill();
-    if (Balance_text) Balance_text.text = SocketManager.ResultData.player.balance.ToString("F3");
+    if (BalanceAmount) BalanceAmount.text = SocketManager.ResultData.player.balance.ToString("F3");
 
     currentBalance = SocketManager.PlayerData.balance;
 
@@ -947,28 +811,6 @@ public class SlotBehaviour : MonoBehaviour
     if (willTriggerFreeSpin)
     {
       if (audioController) audioController.PlayScatterFreeSpin();
-      if (ScatterTrigger_Sprite != null && ScatterTrigger_Sprite.Length > 0)
-      {
-        for (int row = 0; row < numberOfRows; row++)
-        {
-          for (int col = 0; col < numberOfSlots; col++)
-          {
-            if (_displayMatrix[row, col] == 10 && row != 0 && row != numberOfRows - 1)
-            {
-              ImageAnimation anim = TempImages[col].slotImages[row].GetComponent<ImageAnimation>();
-              if (anim != null)
-              {
-                anim.textureArray.Clear();
-                foreach (Sprite s in ScatterTrigger_Sprite)
-                  anim.textureArray.Add(s);
-                anim.doLoopAnimation = true;
-                anim.StartAnimation();
-              }
-              TempImages[col].slotImages[row].rectTransform.sizeDelta = ScatterSymbolBaseSize * 1.5f;
-            }
-          }
-        }
-      }
 
       yield return StartCoroutine(uiManager.PlayFreeSpinTriggerSequence(SocketManager.ResultData.features.freeSpin.count));
       if (MiddleReelGlow) MiddleReelGlow.SetActive(true);
@@ -997,7 +839,7 @@ public class SlotBehaviour : MonoBehaviour
 
     try
     {
-      balance = double.Parse(Balance_text.text);
+      balance = double.Parse(BalanceAmount.text);
     }
     catch (Exception e)
     {
@@ -1009,7 +851,7 @@ public class SlotBehaviour : MonoBehaviour
 
     BalanceTween = DOTween.To(() => initAmount, (val) => initAmount = val, balance, 0.8f).OnUpdate(() =>
     {
-      if (Balance_text) Balance_text.text = initAmount.ToString("F3");
+      if (BalanceAmount) BalanceAmount.text = initAmount.ToString("F3");
     });
   }
 
@@ -1085,9 +927,10 @@ public class SlotBehaviour : MonoBehaviour
       {
         GameObject g = PinballLineGraphics[line];
         g.SetActive(true);
+        // Needs a CanvasGroup to flash (works whether the graphic is one image or a parent of boxes/lines).
         CanvasGroup cg = g.GetComponent<CanvasGroup>();
-        if (!cg) cg = g.AddComponent<CanvasGroup>();
-        lineGroups.Add(cg);
+        if (cg) lineGroups.Add(cg);
+        else Debug.LogWarning($"[PinballBonus] Line graphic '{g.name}' has no CanvasGroup — it'll show but won't flash. Add one to enable the flash.");
       }
       var rows = SocketManager.InitialData.lines[line];
       for (int col = 0; col < numberOfSlots; col++)
@@ -1120,7 +963,7 @@ public class SlotBehaviour : MonoBehaviour
   internal void OnBonusComplete()
   {
     currentBalance = SocketManager.PlayerData.balance;
-    if (Balance_text) Balance_text.text = SocketManager.PlayerData.balance.ToString("F3");
+    if (BalanceAmount) BalanceAmount.text = SocketManager.PlayerData.balance.ToString("F3");
     if (TotalWin_text) TotalWin_text.text = "0.000";
     IsSpinning = false;
     ToggleButtonGrp(true);

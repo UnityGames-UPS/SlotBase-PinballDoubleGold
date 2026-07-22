@@ -16,6 +16,7 @@ public class SocketIOManager : MonoBehaviour
   [SerializeField] private GameObject RaycastBlocker;
   internal GameData InitialData = null;
   internal UiData UIData = null;
+  internal Features GameFeatures = null;   // top-level "features" config from game:init
   internal Root ResultData = null;
   internal Player PlayerData = null;
   internal bool isResultdone = false;
@@ -351,6 +352,7 @@ private void OnError(Error err)
         {
           InitialData = myData.gameData;
           UIData = myData.uiData;
+          GameFeatures = myData.features;
           PlayerData = myData.player;
 
           if (!SetInit)
@@ -487,15 +489,54 @@ public class Root
   public Player player { get; set; }
 }
 
-// SL-PDG's live payload has no freeSpin/jackpot data at all (old SL-TXT-only mechanics).
-// freeSpin/jackpot are kept + default-initialized here only so the still-in-place old
-// free-spin/wild/jackpot logic in SlotBehaviour.cs keeps compiling and stays safely inert
-// (always false/zero) instead of null-reference-crashing every spin.
+// Root.features. On a SL-PDG game:init this carries the top-level game config (baseCoinValue,
+// pinball prizes, doubleSymbol, anyPayouts, linePayout) — captured into SocketManager.GameFeatures.
+// Result payloads have no top-level "features" (the per-spin pinball flag lives at payload.features),
+// so on results this whole object stays default. freeSpin/jackpot are old SL-TXT-only fields kept +
+// default-initialized so the still-in-place free-spin/jackpot logic in SlotBehaviour.cs keeps
+// compiling and stays safely inert instead of null-reference-crashing.
 [Serializable]
 public class Features
 {
   public FreeSpins freeSpin { get; set; } = new FreeSpins();
   public Jackpot jackpot { get; set; } = new Jackpot();
+
+  // SL-PDG init config (populated only from the game:init "features" block; null on results).
+  public double baseCoinValue { get; set; }
+  public PinballConfig pinball { get; set; }
+  public DoubleSymbolConfig doubleSymbol { get; set; }
+  public Dictionary<string, double> anyPayouts { get; set; }
+  public List<LinePayout> linePayout { get; set; }
+}
+
+[Serializable]
+public class PinballConfig
+{
+  public bool enabled { get; set; }
+  public List<int> prizes { get; set; }              // base point values, indexed by result selectedIndex
+  public List<SpecialPrize> specialPrizes { get; set; }
+}
+
+[Serializable]
+public class SpecialPrize
+{
+  public int prize { get; set; }
+  public int extraShots { get; set; }
+}
+
+[Serializable]
+public class DoubleSymbolConfig
+{
+  public bool enabled { get; set; }
+  public List<int> multipliers { get; set; }         // e.g. [2,4,8] — the tiers behind WinningLine.doubleMultiplier
+}
+
+[Serializable]
+public class LinePayout
+{
+  public double payout { get; set; }
+  public List<int> payline { get; set; }
+  public List<int> symbols { get; set; }
 }
 
 [Serializable]

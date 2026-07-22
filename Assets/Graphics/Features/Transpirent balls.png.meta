@@ -1,0 +1,1131 @@
+fileFormatVersion: 2
+guid: 19fcef066a364f741b17d9be33b35dc1
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3102531322091012173
+    second: Transpirent balls_0
+  - first:
+      213: -4631024015550654727
+    second: Transpirent balls_1
+  - first:
+      213: -4701898371725116962
+    second: Transpirent balls_2
+  - first:
+      213: 1682550600146898013
+    second: Transpirent balls_3
+  - first:
+      213: 3768729947423252380
+    second: Transpirent balls_4
+  - first:
+      213: 8277221215344550150
+    second: Transpirent balls_5
+  - first:
+      213: 2554361672975157730
+    second: Transpirent balls_6
+  - first:
+      213: 1028935075310801908
+    second: Transpirent balls_7
+  - first:
+      213: -2457448716425269044
+    second: Transpirent balls_8
+  - first:
+      213: 3659504824305536616
+    second: Transpirent balls_9
+  - first:
+      213: -2018904369140844424
+    second: Transpirent balls_10
+  - first:
+      213: 6119619297413720234
+    second: Transpirent balls_11
+  - first:
+      213: 4562978566376030789
+    second: Transpirent balls_12
+  - first:
+      213: 9122860779328857407
+    second: Transpirent balls_13
+  - first:
+      213: -6189877302159088587
+    second: Transpirent balls_14
+  - first:
+      213: -3204632196599091109
+    second: Transpirent balls_15
+  - first:
+      213: -1562555999804121165
+    second: Transpirent balls_16
+  - first:
+      213: 8842463630589379409
+    second: Transpirent balls_17
+  - first:
+      213: -596048940480568582
+    second: Transpirent balls_18
+  - first:
+      213: 2707456132940735348
+    second: Transpirent balls_19
+  - first:
+      213: -5354485953905076248
+    second: Transpirent balls_20
+  - first:
+      213: 550236373349506485
+    second: Transpirent balls_21
+  - first:
+      213: -4346095484787266517
+    second: Transpirent balls_22
+  - first:
+      213: -4915915065869277772
+    second: Transpirent balls_23
+  - first:
+      213: 172768502458574096
+    second: Transpirent balls_24
+  - first:
+      213: -4552229714472800574
+    second: Transpirent balls_25
+  - first:
+      213: 4446365884729067298
+    second: Transpirent balls_26
+  - first:
+      213: 3097678224976125679
+    second: Transpirent balls_27
+  - first:
+      213: -2097769748077565571
+    second: Transpirent balls_28
+  - first:
+      213: -4652561374086863552
+    second: Transpirent balls_29
+  - first:
+      213: 1740352190580975518
+    second: Transpirent balls_30
+  - first:
+      213: 7905615201116745006
+    second: Transpirent balls_31
+  - first:
+      213: 4686783796368864814
+    second: Transpirent balls_32
+  - first:
+      213: 6041219466717811922
+    second: Transpirent balls_33
+  - first:
+      213: 7576610642560591717
+    second: Transpirent balls_34
+  - first:
+      213: -5244533340348553378
+    second: Transpirent balls_35
+  - first:
+      213: 3733789966890828189
+    second: Transpirent balls_36
+  - first:
+      213: -623684312711984371
+    second: Transpirent balls_37
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Transpirent balls_0
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 927
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bffd32533891f4d0800000000000000
+      internalID: -3102531322091012173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_1
+      rect:
+        serializedVersion: 2
+        x: 482
+        y: 961
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f6dccea13c4bbfb0800000000000000
+      internalID: -4631024015550654727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_2
+      rect:
+        serializedVersion: 2
+        x: 622
+        y: 957
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed93657b7508fbeb0800000000000000
+      internalID: -4701898371725116962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_3
+      rect:
+        serializedVersion: 2
+        x: 759
+        y: 916
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5c40663bde995710800000000000000
+      internalID: 1682550600146898013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_4
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 865
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9f1a8a6be73d4430800000000000000
+      internalID: 3768729947423252380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_5
+      rect:
+        serializedVersion: 2
+        x: 447
+        y: 840
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60160fb37d89ed270800000000000000
+      internalID: 8277221215344550150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_6
+      rect:
+        serializedVersion: 2
+        x: 558
+        y: 852
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e98e81786ae27320800000000000000
+      internalID: 2554361672975157730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_7
+      rect:
+        serializedVersion: 2
+        x: 717
+        y: 822
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f317dcdff2874e00800000000000000
+      internalID: 1028935075310801908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_8
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 850
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc07bbb996365edd0800000000000000
+      internalID: -2457448716425269044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_9
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 773
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86e4f82bf3c29c230800000000000000
+      internalID: 3659504824305536616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_10
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 724
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87830e14c296bf3e0800000000000000
+      internalID: -2018904369140844424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_11
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 768
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa868fee3514de450800000000000000
+      internalID: 6119619297413720234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_12
+      rect:
+        serializedVersion: 2
+        x: 713
+        y: 727
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 542809694d4f25f30800000000000000
+      internalID: 4562978566376030789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_13
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 772
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f356d373b89ea9e70800000000000000
+      internalID: 9122860779328857407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_14
+      rect:
+        serializedVersion: 2
+        x: 869
+        y: 707
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 534ed899363291aa0800000000000000
+      internalID: -6189877302159088587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_15
+      rect:
+        serializedVersion: 2
+        x: 943
+        y: 761
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b507eedfefbd683d0800000000000000
+      internalID: -3204632196599091109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_16
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 670
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bf1502d89fa05ae0800000000000000
+      internalID: -1562555999804121165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_17
+      rect:
+        serializedVersion: 2
+        x: 401
+        y: 662
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 153479892ddb6ba70800000000000000
+      internalID: 8842463630589379409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_18
+      rect:
+        serializedVersion: 2
+        x: 637
+        y: 661
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af268e985a86ab7f0800000000000000
+      internalID: -596048940480568582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_19
+      rect:
+        serializedVersion: 2
+        x: 911
+        y: 626
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 473a2e81201d29520800000000000000
+      internalID: 2707456132940735348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_20
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 650
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e75baae46b01b5b0800000000000000
+      internalID: -5354485953905076248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_21
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 558
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5bd1ff7f015d2a700800000000000000
+      internalID: 550236373349506485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_22
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 542
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2c6355ee219fa3c0800000000000000
+      internalID: -4346095484787266517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_23
+      rect:
+        serializedVersion: 2
+        x: 527
+        y: 551
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b5eed01b4927cbb0800000000000000
+      internalID: -4915915065869277772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_24
+      rect:
+        serializedVersion: 2
+        x: 758
+        y: 550
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0156b61a90cc56200800000000000000
+      internalID: 172768502458574096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_25
+      rect:
+        serializedVersion: 2
+        x: 924
+        y: 509
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ceeed4813b33d0c0800000000000000
+      internalID: -4552229714472800574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_26
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 427
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22701bcd63aa4bd30800000000000000
+      internalID: 4446365884729067298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_27
+      rect:
+        serializedVersion: 2
+        x: 347
+        y: 449
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fee1a24fee92dfa20800000000000000
+      internalID: 3097678224976125679
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_28
+      rect:
+        serializedVersion: 2
+        x: 596
+        y: 435
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d79a641578933e2e0800000000000000
+      internalID: -2097769748077565571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_29
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 401
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04569d1a418ce6fb0800000000000000
+      internalID: -4652561374086863552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_30
+      rect:
+        serializedVersion: 2
+        x: 898
+        y: 383
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e97e6a7b819f62810800000000000000
+      internalID: 1740352190580975518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_31
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 313
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2ded71c32366bd60800000000000000
+      internalID: 7905615201116745006
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_32
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 269
+        width: 74
+        height: 73
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e267f99f70dca0140800000000000000
+      internalID: 4686783796368864814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_33
+      rect:
+        serializedVersion: 2
+        x: 222
+        y: 221
+        width: 74
+        height: 73
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d4d3e3e819b6d350800000000000000
+      internalID: 6041219466717811922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_34
+      rect:
+        serializedVersion: 2
+        x: 337
+        y: 152
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 567a44f9c37852960800000000000000
+      internalID: 7576610642560591717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_35
+      rect:
+        serializedVersion: 2
+        x: 742
+        y: 188
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e57e4d3b6bca737b0800000000000000
+      internalID: -5244533340348553378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_36
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 121
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d910272413611d330800000000000000
+      internalID: 3733789966890828189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Transpirent balls_37
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 131
+        width: 74
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0b81d80c6a3857f0800000000000000
+      internalID: -623684312711984371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Transpirent balls_0: -3102531322091012173
+      Transpirent balls_1: -4631024015550654727
+      Transpirent balls_10: -2018904369140844424
+      Transpirent balls_11: 6119619297413720234
+      Transpirent balls_12: 4562978566376030789
+      Transpirent balls_13: 9122860779328857407
+      Transpirent balls_14: -6189877302159088587
+      Transpirent balls_15: -3204632196599091109
+      Transpirent balls_16: -1562555999804121165
+      Transpirent balls_17: 8842463630589379409
+      Transpirent balls_18: -596048940480568582
+      Transpirent balls_19: 2707456132940735348
+      Transpirent balls_2: -4701898371725116962
+      Transpirent balls_20: -5354485953905076248
+      Transpirent balls_21: 550236373349506485
+      Transpirent balls_22: -4346095484787266517
+      Transpirent balls_23: -4915915065869277772
+      Transpirent balls_24: 172768502458574096
+      Transpirent balls_25: -4552229714472800574
+      Transpirent balls_26: 4446365884729067298
+      Transpirent balls_27: 3097678224976125679
+      Transpirent balls_28: -2097769748077565571
+      Transpirent balls_29: -4652561374086863552
+      Transpirent balls_3: 1682550600146898013
+      Transpirent balls_30: 1740352190580975518
+      Transpirent balls_31: 7905615201116745006
+      Transpirent balls_32: 4686783796368864814
+      Transpirent balls_33: 6041219466717811922
+      Transpirent balls_34: 7576610642560591717
+      Transpirent balls_35: -5244533340348553378
+      Transpirent balls_36: 3733789966890828189
+      Transpirent balls_37: -623684312711984371
+      Transpirent balls_4: 3768729947423252380
+      Transpirent balls_5: 8277221215344550150
+      Transpirent balls_6: 2554361672975157730
+      Transpirent balls_7: 1028935075310801908
+      Transpirent balls_8: -2457448716425269044
+      Transpirent balls_9: 3659504824305536616
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
