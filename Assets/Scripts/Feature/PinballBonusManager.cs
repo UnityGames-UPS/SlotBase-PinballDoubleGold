@@ -41,8 +41,11 @@ public class PinballBonusManager : MonoBehaviour
 
   [Header("Ring — Movement Path")]
   // The circles the ball travels through, in order (outer loop -> inner layer -> toward marbles).
-  // Lit one after another to convey the ball moving.
-  [SerializeField] private List<PathCircle> pathCircles;
+  // Lit one after another to convey the ball moving. All circles share the same two sprites, so
+  // those are single fields here and pathCircles is just the ordered list of circle Images.
+  [SerializeField] private Sprite circleLitSprite;
+  [SerializeField] private Sprite circleUnlitSprite;
+  [SerializeField] private List<Image> pathCircles;
 
   [Header("Ring — Prizes (UFOs + marbles)")]
   // Every prize the ball can land on. Matched to a shot by isSpecial + prizeIndex; stopAtCircleIndex
@@ -200,15 +203,15 @@ public class PinballBonusManager : MonoBehaviour
   private void SetCircleLit(int index, bool on)
   {
     if (pathCircles == null || index < 0 || index >= pathCircles.Count) return;
-    PathCircle c = pathCircles[index];
-    if (c != null && c.image) c.image.sprite = on ? c.litSprite : c.unlitSprite;
+    Image img = pathCircles[index];
+    if (img) img.sprite = on ? circleLitSprite : circleUnlitSprite;
   }
 
   private void ClearAllLights()
   {
     if (pathCircles != null)
-      foreach (PathCircle c in pathCircles)
-        if (c != null && c.image) c.image.sprite = c.unlitSprite;
+      foreach (Image img in pathCircles)
+        if (img) img.sprite = circleUnlitSprite;
     if (prizes != null)
       foreach (Prize p in prizes)
         if (p != null && p.image && p.baseSprite) p.image.sprite = p.baseSprite;
@@ -319,15 +322,6 @@ public class PinballBonusManager : MonoBehaviour
     if (bonusWinAmount) bonusWinAmount.text = amount.ToString("F2");
   }
   #endregion
-}
-
-// One movement circle. Lit in sequence to convey the ball travelling; sprite swap on its Image.
-[System.Serializable]
-public class PathCircle
-{
-  public Image image;
-  public Sprite litSprite;
-  public Sprite unlitSprite;
 }
 
 // One prize the ball can land on — a UFO or a marble (same class; isSpecial flags the "+1 Shot" UFOs).
