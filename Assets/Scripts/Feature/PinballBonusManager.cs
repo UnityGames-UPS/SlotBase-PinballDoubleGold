@@ -39,23 +39,32 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private TMP_Text bonusWinAmount;
   [SerializeField] private TMP_Text totalBetAmount;
 
-  [Header("Ring — Movement Path")]
-  // The circles the ball travels through, in order (outer loop -> inner layer -> toward marbles).
-  // Lit one after another to convey the ball moving. All circles share the same two sprites, so
-  // those are single fields here and pathCircles is just the ordered list of circle Images.
+  [Header("Ring — Circles")]
+  // All circles (outer loop + inner route circles) share the same two sprites, swapped to light up.
   [SerializeField] private Sprite circleLitSprite;
   [SerializeField] private Sprite circleUnlitSprite;
-  [SerializeField] private List<Image> pathCircles;
+  // The outer loop, lit straight through every shot before the inner routing begins.
+  [SerializeField] private List<Image> outerPath;
 
-  [Header("Ring — Prizes (UFOs + marbles)")]
-  // Every prize the ball can land on. Matched to a shot by isSpecial + prizeIndex; stopAtCircleIndex
-  // says which pathCircles index the ball rests at before landing here.
-  [SerializeField] private List<Prize> prizes;
+  [Header("Ring — Prizes")]
+  // UFOs: land-beside prizes reached via curated routes, matched by isSpecial + selectedIndex.
+  // Marbles: the chute accumulator — filled bottom->top, so ordered here in FILL order
+  // (marbles[0] = first/bottom = chutePrizes[0]; marbles[last] = jackpot = top). A chute shot lands
+  // on marbles[selectedIndex] (== chuteHits-1) and that marble stays lit for the rest of the bonus.
+  [SerializeField] private List<Ufo> ufos = new List<Ufo>();
+  [SerializeField] private List<Marble> marbles = new List<Marble>();
+  [SerializeField] private List<BallRoute> marbleApproachRoutes = new List<BallRoute>();
+  // Shared marble collected/uncollected sprites (all marbles use the same pair; the jackpot marble's
+  // distinct look is its own child graphic on top). A collected marble's Image sits on marbleLitSprite.
+  [SerializeField] private Sprite marbleLitSprite;
+  [SerializeField] private Sprite marbleUnlitSprite;
 
   [Header("Ring Animation Timing")]
-  [SerializeField] private float perCircleLightDuration = 0.05f;
-  [SerializeField] private int prizeFlashCount = 4;
+  [SerializeField] private float perCircleLightDuration = 0.05f;   // time per circle as the light travels
+  [SerializeField] private float marbleLandHold = 0.5f;            // hold after a marble is collected
+  [SerializeField] private int prizeFlashCount = 4;                // flash pulses on the landed prize
   [SerializeField] private float prizeFlashHalfCycle = 0.15f;
+  [SerializeField] private float prizeFlashLowAlpha = 0.2f;        // dim end of each flash pulse
   [SerializeField] private float endHoldDuration = 1.5f;
 
   // Runtime state
@@ -67,6 +76,7 @@ public class PinballBonusManager : MonoBehaviour
   private bool _homesCaptured;
   private float _gameContentHomeY;
   private float _specialHomeY;
+  private Image _litCircle;   // the single circle currently lit (the travelling light)
 
   private void Awake()
   {
@@ -139,7 +149,7 @@ public class PinballBonusManager : MonoBehaviour
     yield return new WaitUntil(() => socketManager.isResultdone);
 
     Payload p = socketManager.ResultData.payload;
-    yield return StartCoroutine(AnimateShot(p.isSpecial, p.selectedIndex));
+    yield return StartCoroutine(AnimateShot(p.isChute, p.isSpecial, p.selectedIndex));
 
     // Trust the backend's post-shot state for the displays and the next enable/disable decision.
     _shotsRemaining = p.bonusState.shotsRemaining;
@@ -156,76 +166,137 @@ public class PinballBonusManager : MonoBehaviour
   #endregion
 
   #region Ring animation
-  // Lights the path circles in order up to the destination prize, then flashes that prize. Backend
-  // gives only the destination (isSpecial + selectedIndex); the traversal is synthesized here.
-  private IEnumerator AnimateShot(bool isSpecial, int selectedIndex)
+  // Plays the ball's journey for one shot: the outer loop, then to the backend-chosen destination.
+  private IEnumerator AnimateShot(bool isChute, bool isSpecial, int selectedIndex)
   {
-    Prize dest = FindPrize(isSpecial, selectedIndex);
-    int lastCircle = pathCircles != null ? pathCircles.Count - 1 : -1;
-    int stop = dest != null ? Mathf.Clamp(dest.stopAtCircleIndex, 0, lastCircle) : lastCircle;
+    // 1. Outer loop, always the same, straight through.
+    yield return LightSequence(outerPath);
 
-    // Ball moving: single travelling light along the circles.
-    for (int i = 0; i <= stop; i++)
+    // 2a. Chute — approach the marble entry, then collect marbles[selectedIndex] (it stays lit).
+    if (isChute)
     {
-      SetCircleLit(i, true);
-      yield return new WaitForSeconds(perCircleLightDuration);
-      if (i < stop) SetCircleLit(i, false);
+      yield return LightSequence(PickRoute(marbleApproachRoutes)?.circles);
+      ClearLight();
+      yield return CollectMarble(selectedIndex);
+      yield break;
     }
-    if (stop >= 0) SetCircleLit(stop, false);
 
-    // Ball landed: flash the prize its own way.
-    if (dest != null) yield return StartCoroutine(FlashPrize(dest));
+    // 2b. UFO (regular or special) — travel a curated route to a circle beside it, then flash it.
+    Ufo ufo = FindUfo(isSpecial, selectedIndex);
+    if (ufo != null)
+    {
+      BallRoute route = PickRoute(ufo.routes);
+      if (route != null) yield return LightSequence(route.circles);
+      ClearLight();
+      yield return FlashPrize(ufo.image);
+      ClearLight();
+      yield break;
+    }
+
+    ClearLight();
+    Debug.LogWarning($"[PinballBonus] No UFO wired for isSpecial={isSpecial}, selectedIndex={selectedIndex}.");
   }
 
-  // The prize whose isSpecial + prizeIndex match the shot result.
-  private Prize FindPrize(bool isSpecial, int selectedIndex)
+  // Moves the single travelling light through the given circles in order. Continuous across calls,
+  // so outer loop -> route reads as one moving light (each step turns off the previous circle).
+  private IEnumerator LightSequence(List<Image> circles)
   {
-    if (prizes != null)
-      foreach (Prize p in prizes)
-        if (p != null && p.isSpecial == isSpecial && p.prizeIndex == selectedIndex)
-          return p;
-    Debug.LogWarning($"[PinballBonus] No prize wired for isSpecial={isSpecial}, selectedIndex={selectedIndex}.");
+    if (circles == null) yield break;
+    foreach (Image circle in circles)
+    {
+      if (!circle) continue;
+      MoveLightTo(circle);
+      yield return new WaitForSeconds(perCircleLightDuration);
+    }
+  }
+
+  // The chute is a bottom-up accumulator: the newly-reached marble (marbles[index], index == chuteHits-1)
+  // lights and STAYS lit for the rest of the bonus. Prior marbles are already lit from earlier hits,
+  // so only the new one is touched here. marbles[last] is the jackpot.
+  private IEnumerator CollectMarble(int index)
+  {
+    if (marbles == null || index < 0 || index >= marbles.Count)
+    {
+      Debug.LogWarning($"[PinballBonus] Chute shot for marble index {index}, but no such marble is wired.");
+      yield break;
+    }
+    Marble m = marbles[index];
+    if (m != null && m.image && marbleLitSprite) m.image.sprite = marbleLitSprite;
+    yield return new WaitForSeconds(marbleLandHold);
+  }
+
+  private Ufo FindUfo(bool isSpecial, int selectedIndex)
+  {
+    if (ufos != null)
+      foreach (Ufo u in ufos)
+        if (u != null && u.isSpecial == isSpecial && u.prizeIndex == selectedIndex)
+          return u;
     return null;
   }
 
-  private IEnumerator FlashPrize(Prize prize)
+  private BallRoute PickRoute(List<BallRoute> routes)
   {
-    if (prize == null || prize.image == null) yield break;
-    for (int i = 0; i < prizeFlashCount; i++)
-    {
-      if (prize.highlightSprite) prize.image.sprite = prize.highlightSprite;
-      yield return new WaitForSeconds(prizeFlashHalfCycle);
-      if (prize.baseSprite) prize.image.sprite = prize.baseSprite;
-      yield return new WaitForSeconds(prizeFlashHalfCycle);
-    }
+    if (routes == null || routes.Count == 0) return null;
+    return routes[Random.Range(0, routes.Count)];
   }
 
-  private void SetCircleLit(int index, bool on)
+  // Circle lighting is a single travelling light: only one circle is lit at a time, so lighting the
+  // next turns off the previous. That also means clearing is just clearing that one circle.
+  private void MoveLightTo(Image circle)
   {
-    if (pathCircles == null || index < 0 || index >= pathCircles.Count) return;
-    Image img = pathCircles[index];
-    if (img) img.sprite = on ? circleLitSprite : circleUnlitSprite;
+    if (_litCircle && _litCircle != circle) _litCircle.sprite = circleUnlitSprite;
+    if (circle) circle.sprite = circleLitSprite;
+    _litCircle = circle;
+  }
+
+  private void ClearLight()
+  {
+    if (_litCircle) _litCircle.sprite = circleUnlitSprite;
+    _litCircle = null;
+  }
+
+  // A flashing pulse on the landed prize (UFO or the final marble): alpha yoyo, restored to full.
+  private IEnumerator FlashPrize(Image img)
+  {
+    if (!img) yield break;
+    img.DOKill();
+    img.DOFade(prizeFlashLowAlpha, prizeFlashHalfCycle).SetLoops(prizeFlashCount * 2, LoopType.Yoyo);
+    yield return new WaitForSeconds(prizeFlashCount * 2 * prizeFlashHalfCycle);
+    RestoreAlpha(img);
+  }
+
+  private static void RestoreAlpha(Image img)
+  {
+    Color c = img.color;
+    c.a = 1f;
+    img.color = c;
   }
 
   private void ClearAllLights()
   {
-    if (pathCircles != null)
-      foreach (Image img in pathCircles)
+    ClearLight();
+    if (outerPath != null)
+      foreach (Image img in outerPath)
         if (img) img.sprite = circleUnlitSprite;
-    if (prizes != null)
-      foreach (Prize p in prizes)
-        if (p != null && p.image && p.baseSprite) p.image.sprite = p.baseSprite;
+    if (ufos != null)
+      foreach (Ufo u in ufos)
+        if (u != null && u.image) RestoreAlpha(u.image);
+    // Reset the chute: every marble back to uncollected (unlit). Called at bonus start, so the
+    // accumulator starts empty; during a bonus, collected marbles are intentionally left lit.
+    if (marbles != null)
+      foreach (Marble m in marbles)
+        if (m != null && m.image && marbleUnlitSprite) m.image.sprite = marbleUnlitSprite;
   }
 
-  // Prize point values shown on the ships/marbles are bet-dependent and set at runtime here.
-  // Base values are available via socketManager.GameFeatures.pinball.prizes / specialPrizes
-  // (prizes[prizeIndex] for normal prizes, specialPrizes[prizeIndex].prize for special ones).
+  // Prize point values shown on the UFOs/marbles are bet-dependent and set at runtime here.
+  // Base values are in socketManager.GameFeatures.pinball: prizes[]/specialPrizes[] for UFOs (by their
+  // prizeIndex), chutePrizes[] for marbles (by their POSITION in the marbles list).
   // TODO(pinball): apply the bet-scaling factor once known, e.g.:
   //   PinballConfig cfg = socketManager?.GameFeatures?.pinball;
-  //   foreach prize with a pointsAmount:
-  //     int base = prize.isSpecial ? cfg.specialPrizes[prize.prizeIndex].prize
-  //                                : cfg.prizes[prize.prizeIndex];
-  //     prize.pointsAmount.text = (base * BetScaleFactor(_betIndex)).ToString();
+  //   foreach ufo:    ufo.prizeAmount.text = ((ufo.isSpecial ? cfg.specialPrizes[ufo.prizeIndex].prize
+  //                                                           : cfg.prizes[ufo.prizeIndex]) * BetScaleFactor(_betIndex)).ToString();
+  //   for (int i = 0; i < marbles.Count; i++)  // jackpot marble (last) shows its JACKPOT graphic, no label
+  //     marbles[i].prizeAmount.text = (cfg.chutePrizes[i] * BetScaleFactor(_betIndex)).ToString();
   private void RefreshPrizeLabels()
   {
   }
@@ -322,18 +393,4 @@ public class PinballBonusManager : MonoBehaviour
     if (bonusWinAmount) bonusWinAmount.text = amount.ToString("F2");
   }
   #endregion
-}
-
-// One prize the ball can land on — a UFO or a marble (same class; isSpecial flags the "+1 Shot" UFOs).
-// Matched to a shot by isSpecial + prizeIndex.
-[System.Serializable]
-public class Prize
-{
-  public Image image;                   // the prize's Image; sprite swapped between base/highlight when it flashes
-  public Sprite baseSprite;
-  public Sprite highlightSprite;
-  public bool isSpecial;                // true = a "+1 Shot" pocket (backend isSpecial)
-  public int prizeIndex = -1;           // the backend selectedIndex this prize pays
-  public TMP_Text pointsAmount;         // runtime-set, bet-dependent points label
-  public int stopAtCircleIndex = -1;    // which pathCircles index the ball rests at before landing here
 }

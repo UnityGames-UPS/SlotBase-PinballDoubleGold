@@ -513,7 +513,9 @@ public class Features
 public class PinballConfig
 {
   public bool enabled { get; set; }
-  public List<int> prizes { get; set; }              // base point values, indexed by result selectedIndex
+  public int jackpot { get; set; }                   // jackpot point value (also the last chutePrizes entry)
+  public List<int> prizes { get; set; }              // UFO base point values, indexed by result selectedIndex
+  public List<int> chutePrizes { get; set; }         // 5 marble values, top->bottom; last = jackpot
   public List<SpecialPrize> specialPrizes { get; set; }
 }
 
@@ -560,8 +562,9 @@ public class Payload
   // absent fields at their defaults). See pdg-backend-clarifications for the field semantics.
   public double bonusWin { get; set; }         // this shot's award (money)
   public bool isOver { get; set; }             // feature-complete flag (end signal)
-  public int selectedIndex { get; set; }       // prize index: prizes[] normally, specialPrizes[] when isSpecial
-  public bool isSpecial { get; set; }          // hit a +shot special pocket
+  public int selectedIndex { get; set; }       // prize index: prizes[] (UFO), specialPrizes[] (special), or chutePrizes[] (chute; == chuteHits-1)
+  public bool isSpecial { get; set; }          // hit a +shot special UFO
+  public bool isChute { get; set; }            // this shot went down the chute (marble) instead of a UFO
   public BonusState bonusState { get; set; } = new BonusState();
 
   // Old SL-TXT-only fields, kept + default-initialized for the same reason as Features above:
@@ -580,6 +583,7 @@ public class BonusState
   public int shotsRemaining { get; set; }      // authoritative post-shot count (already nets extraShots)
   public double totalBonusWin { get; set; }    // running feature total; credited to balance on isOver
   public int extraShots { get; set; }          // extra shots granted by this shot (special pockets)
+  public int chuteHits { get; set; }           // persistent marble-chute counter this bonus; chute shot lands on marbles[chuteHits-1]
 }
 
 [Serializable]
