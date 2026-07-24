@@ -60,7 +60,8 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private Sprite marbleUnlitSprite;
 
   [Header("Ring Animation Timing")]
-  [SerializeField] private float perCircleLightDuration = 0.05f;   // time per circle as the light travels
+  [SerializeField] private float perCircleLightDuration = 0.12f;   // time per circle as the light travels (higher = slower ball)
+  [SerializeField] private int outerTrailMax = 2;                  // circles lit ahead/behind the ball at the start of the outer loop; shrinks to 0 by the inner layer
   [SerializeField] private float marbleLandHold = 0.5f;            // hold after a marble is collected
   [SerializeField] private int prizeFlashCount = 4;                // flash pulses on the landed prize
   [SerializeField] private float prizeFlashHalfCycle = 0.15f;
@@ -107,6 +108,7 @@ public class PinballBonusManager : MonoBehaviour
     UpdateBonusWinAmount(0);
     if (totalBetAmount) totalBetAmount.text = _totalBet.ToString("F2");
     RefreshPrizeLabels();
+    RefreshPlusShotLabels();
     ClearAllLights();
     SetShootInteractable(false);
 
@@ -169,8 +171,8 @@ public class PinballBonusManager : MonoBehaviour
   // Plays the ball's journey for one shot: the outer loop, then to the backend-chosen destination.
   private IEnumerator AnimateShot(bool isChute, bool isSpecial, int selectedIndex)
   {
-    // 1. Outer loop, always the same, straight through.
-    yield return LightSequence(outerPath);
+    // 1. Outer loop, always the same, straight through — lit as a shrinking comet trail.
+    yield return LightOuterPathWithTrail();
 
     // 2a. Chute — approach the marble entry, then collect marbles[selectedIndex] (it stays lit).
     if (isChute)
@@ -195,6 +197,31 @@ public class PinballBonusManager : MonoBehaviour
 
     ClearLight();
     Debug.LogWarning($"[PinballBonus] No UFO wired for isSpecial={isSpecial}, selectedIndex={selectedIndex}.");
+  }
+
+  // Outer loop only: the ball leaves a comet trail. Near the shoot point, `outerTrailMax` circles
+  // ahead and behind the ball stay lit; the trail width shrinks linearly to 0 across the loop, so by
+  // the time the ball hands off to the inner layer only the ball itself is lit. Each step lights the
+  // window [i - trail, i + trail] and unlights every other outer circle, so old trail circles fade off
+  // as the window advances and narrows. The final lit circle is handed to the travelling-light tracker
+  // so the inner route continues seamlessly (its first MoveLightTo turns this one off).
+  private IEnumerator LightOuterPathWithTrail()
+  {
+    if (outerPath == null || outerPath.Count == 0) yield break;
+    int n = outerPath.Count;
+    for (int i = 0; i < n; i++)
+    {
+      float progress = n > 1 ? (float)i / (n - 1) : 1f;
+      int trail = Mathf.RoundToInt(outerTrailMax * (1f - progress));
+      for (int j = 0; j < n; j++)
+      {
+        if (!outerPath[j]) continue;
+        bool lit = j >= i - trail && j <= i + trail;
+        outerPath[j].sprite = lit ? circleLitSprite : circleUnlitSprite;
+      }
+      yield return new WaitForSeconds(perCircleLightDuration);
+    }
+    _litCircle = outerPath[n - 1];   // single remaining lit circle; the inner route picks up from here
   }
 
   // Moves the single travelling light through the given circles in order. Continuous across calls,
@@ -288,17 +315,57 @@ public class PinballBonusManager : MonoBehaviour
         if (m != null && m.image && marbleUnlitSprite) m.image.sprite = marbleUnlitSprite;
   }
 
-  // Prize point values shown on the UFOs/marbles are bet-dependent and set at runtime here.
-  // Base values are in socketManager.GameFeatures.pinball: prizes[]/specialPrizes[] for UFOs (by their
-  // prizeIndex), chutePrizes[] for marbles (by their POSITION in the marbles list).
-  // TODO(pinball): apply the bet-scaling factor once known, e.g.:
-  //   PinballConfig cfg = socketManager?.GameFeatures?.pinball;
-  //   foreach ufo:    ufo.prizeAmount.text = ((ufo.isSpecial ? cfg.specialPrizes[ufo.prizeIndex].prize
-  //                                                           : cfg.prizes[ufo.prizeIndex]) * BetScaleFactor(_betIndex)).ToString();
-  //   for (int i = 0; i < marbles.Count; i++)  // jackpot marble (last) shows its JACKPOT graphic, no label
-  //     marbles[i].prizeAmount.text = (cfg.chutePrizes[i] * BetScaleFactor(_betIndex)).ToString();
+  // Sets each UFO/marble prize label from the init base values × the current line bet — i.e. the
+  // MONEY that prize would pay, matching the backend's bonusWin = baseValue × lineBet.
+  // NOTE: this shows the money value (e.g. 1.50). The special-game UI convention is to show POINTS
+  // (money × 100 = 150); that ×100 is deliberately NOT applied yet — multiply here once confirmed.
   private void RefreshPrizeLabels()
   {
+    PinballConfig cfg = socketManager != null && socketManager.GameFeatures != null
+      ? socketManager.GameFeatures.pinball : null;
+    if (cfg == null) return;
+
+    double lineBet = 0;
+    var bets = socketManager.InitialData != null ? socketManager.InitialData.bets : null;
+    if (bets != null && _betIndex >= 0 && _betIndex < bets.Count) lineBet = bets[_betIndex];
+
+    // UFOs: prizes[] normally, specialPrizes[] when special, by the UFO's prizeIndex.
+    if (ufos != null)
+      foreach (Ufo u in ufos)
+      {
+        if (u == null || u.prizeAmount == null || u.prizeIndex < 0) continue;
+        double baseValue;
+        if (u.isSpecial)
+        {
+          if (cfg.specialPrizes == null || u.prizeIndex >= cfg.specialPrizes.Count) continue;
+          baseValue = cfg.specialPrizes[u.prizeIndex].prize;
+        }
+        else
+        {
+          if (cfg.prizes == null || u.prizeIndex >= cfg.prizes.Count) continue;
+          baseValue = cfg.prizes[u.prizeIndex];
+        }
+        u.prizeAmount.text = (baseValue * lineBet).ToString("F2");
+      }
+
+    // Marbles: chutePrizes[] by list position. Jackpot marble (last) has no prizeAmount (JACKPOT graphic).
+    if (marbles != null && cfg.chutePrizes != null)
+      for (int i = 0; i < marbles.Count && i < cfg.chutePrizes.Count; i++)
+      {
+        Marble m = marbles[i];
+        if (m == null || m.prizeAmount == null) continue;
+        m.prizeAmount.text = (cfg.chutePrizes[i] * lineBet).ToString("F2");
+      }
+  }
+
+  // Shows the "+1 Shot" object only on the special UFOs (hidden on the rest). Runs at bonus start and
+  // reads ufo.isSpecial — set in the editor for a fixed layout, or by code once a per-bonus layout lands.
+  private void RefreshPlusShotLabels()
+  {
+    if (ufos == null) return;
+    foreach (Ufo u in ufos)
+      if (u != null && u.plusShotLabel != null)
+        u.plusShotLabel.SetActive(u.isSpecial);
   }
   #endregion
 

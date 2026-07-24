@@ -190,12 +190,12 @@ public class SocketIOManager : MonoBehaviour
 
   private void OnPongReceived(string data) //Back2 Start
   {
-    Debug.Log("✅ Received pong from server.");
+    // Debug.Log("✅ Received pong from server.");
     waitingForPong = false;
     missedPongs = 0;
     lastPongTime = Time.time;
-    Debug.Log($"⏱️ Updated last pong time: {lastPongTime}");
-    Debug.Log($"📦 Pong payload: {data}");
+    // Debug.Log($"⏱️ Updated last pong time: {lastPongTime}");
+    // Debug.Log($"📦 Pong payload: {data}");
   } //Back2 end
 
 private void OnError(Error err)
@@ -258,7 +258,7 @@ private void OnError(Error err)
   {
     while (true)
     {
-      Debug.Log($"🟡 PingCheck | waitingForPong: {waitingForPong}, missedPongs: {missedPongs}, timeSinceLastPong: {Time.time - lastPongTime}");
+      // Debug.Log($"🟡 PingCheck | waitingForPong: {waitingForPong}, missedPongs: {missedPongs}, timeSinceLastPong: {Time.time - lastPongTime}");
 
       if (missedPongs == 0)
       {
@@ -269,7 +269,7 @@ private void OnError(Error err)
       if (waitingForPong)
       {
         missedPongs++;
-        Debug.LogWarning($"⚠️ Pong missed #{missedPongs}/{MaxMissedPongs}");
+        // Debug.LogWarning($"⚠️ Pong missed #{missedPongs}/{MaxMissedPongs}");
 
         if (missedPongs == 2)
         {
@@ -282,7 +282,7 @@ private void OnError(Error err)
 
         if (missedPongs >= MaxMissedPongs)
         {
-          Debug.LogError("❌ Unable to connect to server — 5 consecutive pongs missed.");
+          // Debug.LogError("❌ Unable to connect to server — 5 consecutive pongs missed.");
           isConnected = false;
           uiManager.DisconnectionPopup();
           yield break;
@@ -292,7 +292,7 @@ private void OnError(Error err)
       // Send next ping
       waitingForPong = true;
       lastPongTime = Time.time;
-      Debug.Log("📤 Sending ping...");
+      // Debug.Log("📤 Sending ping...");
       SendDataWithNamespace("ping");
       yield return new WaitForSeconds(pingInterval);
     }
