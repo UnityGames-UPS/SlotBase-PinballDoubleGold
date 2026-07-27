@@ -194,9 +194,9 @@
       "group": "sevens",
       "payout": 25,
       "reelsInstance": {
-        "0": 50,
-        "1": 50,
-        "2": 50
+        "0": 5,
+        "1": 5,
+        "2": 5
       }
     }
   ],
@@ -215,9 +215,9 @@
       "enabled": true,
       "jackpot": 5000,
       "payoutProb": {
-        "chute": 0.15,
-        "regular": 0.7,
-        "special": 0.15
+        "chute": 0.8,
+        "regular": 0.1,
+        "special": 0.1
       },
       "prizeProbs": [
         0.125,

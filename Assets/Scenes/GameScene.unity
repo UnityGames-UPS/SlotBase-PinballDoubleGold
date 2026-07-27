@@ -13069,7 +13069,7 @@ PrefabInstance:
       objectReference: {fileID: 1728521618}
     - target: {fileID: 7610637853776029503, guid: fbbc9264dc50de44589243147c5ea3dc, type: 3}
       propertyPath: testToken
-      value: a0d9b754feb94ff084bcca031fdc130d
+      value: 8a2a30afbeea4d41b0214d7ef083b843
       objectReference: {fileID: 0}
     - target: {fileID: 7610637853776029503, guid: fbbc9264dc50de44589243147c5ea3dc, type: 3}
       propertyPath: uiManager

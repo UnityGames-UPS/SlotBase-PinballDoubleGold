@@ -166,9 +166,9 @@ public class SlotBehaviour : MonoBehaviour
     { 3, 3, 3 }
   };
 
-  // Cached per-landed-spin 5-row display grid: server sends only the 3 real rows
-  // (payload.reels), rows 0 and numberOfRows-1 are synthesized client-side (see
-  // BuildDisplayMatrix). Built once when a spin lands; every other reader of "the matrix"
+  // Cached per-landed-spin 5-row display grid: server sends all 5 display rows in payload.reels
+  // (rows 0/4 decorative, 1..3 active), copied across as-is (see BuildDisplayMatrix). Built once
+  // when a spin lands; every other reader of "the matrix"
   // in this file should read from this instead of SocketManager.ResultData directly.
   private int[,] _displayMatrix;
 
@@ -442,46 +442,16 @@ public class SlotBehaviour : MonoBehaviour
   // }
 
 
-  // Synthesizes the decorative top/bottom rows (0 and numberOfRows-1) from the server's
-  // 3 real rows (payload.reels). By design a real reel column can only ever land with
-  // exactly 1 symbol (centered) or exactly 2 symbols (top+bottom, gapped) - see
-  // pdg_backend_clarifications. Any other pattern is a backend bug; log and fall back to
-  // blank rather than throw.
+  // The server now sends all numberOfRows display rows directly in payload.reels (reels[row][col]):
+  // rows 0 and numberOfRows-1 are the decorative top/bottom rows, rows 1..3 the active rows. So we just
+  // copy them straight across — no client-side decorative synthesis, and no 1-centered/2-gapped rule to
+  // police (the backend owns the whole grid, including trigger/diagonal spins that used to break it).
   private int[,] BuildDisplayMatrix(List<List<string>> reels)
   {
     int[,] display = new int[numberOfRows, numberOfSlots];
-    List<Symbol> nonBlankSymbols = SocketManager.UIData.paylines.symbols.FindAll(s => s.id != 0);
-
-    for (int col = 0; col < numberOfSlots; col++)
-    {
-      int top = int.Parse(reels[0][col]);
-      int mid = int.Parse(reels[1][col]);
-      int bottom = int.Parse(reels[2][col]);
-
-      display[1, col] = top;
-      display[2, col] = mid;
-      display[3, col] = bottom;
-
-      bool oneCentered = top == 0 && mid != 0 && bottom == 0;
-      bool twoGapped = top != 0 && mid == 0 && bottom != 0;
-
-      if (!oneCentered && !twoGapped)
-      {
-        Debug.LogWarning($"[DecorativeRow] Unexpected column pattern at col {col}: ({top},{mid},{bottom}) — expected exactly 1 centered or 2 top/bottom non-blank symbols. Defaulting decorative rows to blank.");
-      }
-
-      if (oneCentered && nonBlankSymbols.Count > 0)
-      {
-        display[0, col] = nonBlankSymbols[UnityEngine.Random.Range(0, nonBlankSymbols.Count)].id;
-        display[numberOfRows - 1, col] = nonBlankSymbols[UnityEngine.Random.Range(0, nonBlankSymbols.Count)].id;
-      }
-      else
-      {
-        display[0, col] = 0;
-        display[numberOfRows - 1, col] = 0;
-      }
-    }
-
+    for (int row = 0; row < numberOfRows; row++)
+      for (int col = 0; col < numberOfSlots; col++)
+        display[row, col] = int.Parse(reels[row][col]);
     return display;
   }
 
@@ -890,11 +860,12 @@ public class SlotBehaviour : MonoBehaviour
   }
 
   #region PinballBonusTrigger
-  // Backend paylines are indexed against the 3 real reel rows (0..2), but the client renders a
-  // padded 5-row layout with the real rows at 1..3 (rows 0/4 are decorative, synthesized in
-  // BuildDisplayMatrix). So a backend line row maps to _displayMatrix / slotImages row +1.
-  // Used by the pinball-trigger scan/flash and by the base-game win highlight
-  // (CheckPayoutLineBackend, CheckAnyPureWildLine).
+  // Backend paylines (InitialData.lines) are indexed against the 3 active reel rows (0..2), while the
+  // 5-row display puts the active rows at 1..3 (rows 0/4 are decorative). So a payline row maps to
+  // _displayMatrix / slotImages row +1. Confirmed against live winningLines: lines[0]=[1,1,1] (active
+  // row 1) lands at display row 2. Used by the pinball-trigger scan/flash and the base-game win
+  // highlight (CheckPayoutLineBackend, CheckAnyPureWildLine). NOTE: winningLines[].positions are already
+  // in display (0..4) space — do NOT PaddedRow those; only the lines[] values need the offset.
   private int PaddedRow(int backendLineRow) => backendLineRow + 1;
 
   // Returns every active payline whose three positions all hold the Pinball symbol (id 11).
