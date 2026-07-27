@@ -28,10 +28,36 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private RectTransform pinballSpecialUI;  // = PinballSpecialUI root; scrolls in from the top
   [SerializeField] private CanvasGroup baseGameUI;          // wrapper around the surrounding base UI that fades out (not the machine)
   [SerializeField] private CanvasGroup bonusDecorations;    // ring/ships/marbles/counters that fade in after scroll
+  // Bonus graphics that must sit ON TOP of the start-prompt dark overlay (paylines graphic, Total Bet /
+  // Bonus Win graphics + text). Their own parent, placed AFTER BonusStartPrompt in the hierarchy so it
+  // renders above the overlay; fades in/out at the same time as bonusDecorations.
+  [SerializeField] private CanvasGroup bonusFrontDecorations;
   [SerializeField] private float scrollDistance = 1080f;
   [SerializeField] private float scrollDuration = 1f;
   [SerializeField] private Ease scrollEase = Ease.InOutCubic;
   [SerializeField] private float fadeDuration = 0.4f;
+
+  [Header("Bonus Start Prompt")]
+  // Fades in at the end of the scroll: a dark overlay + the "BONUS TRIGGERED / PRESS BUTTON TO START"
+  // graphic + the start button, all children of ONE CanvasGroup so a single fade brings them in together
+  // (the overlay is the backmost child, so it darkens the bonus board behind the prompt). Pressing
+  // bonusStartButton fades it back out and hands control to the shot loop. Leave bonusStartGroup null to
+  // skip the gate entirely.
+  [SerializeField] private CanvasGroup bonusStartGroup;
+  [SerializeField] private Button bonusStartButton;
+  [SerializeField] private float startPromptFadeDuration = 0.4f;
+  [SerializeField] private float startButtonPulseScale = 1.1f;      // peak scale of the pulsing start button
+  [SerializeField] private float startButtonPulseDuration = 0.7f;   // half-cycle time (slow ease in/out)
+
+  [Header("Bonus Intro (UFO chase + ball entry)")]
+  // After Start: all UFOs run a rotating chase-light flourish (shared lit/dim sprite swap), then the ball
+  // rolls backwards around the outer ring to the first circle. ufoChaseSteps is authored per-frame: each
+  // step lists the UFOs lit on that frame (all others dimmed); the steps cycle to make the line rotate.
+  [SerializeField] private Sprite ufoLitSprite;
+  [SerializeField] private Sprite ufoDimSprite;
+  [SerializeField] private List<UfoChaseStep> ufoChaseSteps = new List<UfoChaseStep>();
+  [SerializeField] private float chaseStepInterval = 0.1f;   // time each chase frame is held
+  [SerializeField] private float ufoChaseDuration = 1.5f;    // total chase length before the ball rolls in
 
   [Header("Controls & Displays")]
   [SerializeField] private Button shootButton;
@@ -45,6 +71,9 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private Sprite circleUnlitSprite;
   // The outer loop, lit straight through every shot before the inner routing begins.
   [SerializeField] private List<Image> outerPath;
+  // The first N entries of outerPath are chute-marble graphics, not plain circles: identical travel/trail
+  // behaviour, but they swap the shared marbleLit/marbleUnlit sprites (below) instead of the circle pair.
+  [SerializeField] private int outerMarbleLeadCount = 3;
 
   [Header("Ring — Prizes")]
   // UFOs: land-beside prizes reached via curated routes, matched by isSpecial + selectedIndex.
@@ -64,8 +93,7 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private int outerTrailMax = 2;                  // circles lit ahead/behind the ball at the start of the outer loop; shrinks to 0 by the inner layer
   [SerializeField] private float marbleLandHold = 0.5f;            // hold after a marble is collected
   [SerializeField] private int prizeFlashCount = 4;                // flash pulses on the landed prize
-  [SerializeField] private float prizeFlashHalfCycle = 0.15f;
-  [SerializeField] private float prizeFlashLowAlpha = 0.2f;        // dim end of each flash pulse
+  [SerializeField] private float prizeFlashHalfCycle = 0.15f;     // on/off duration of each blink
   [SerializeField] private float endHoldDuration = 1.5f;
 
   // Runtime state
@@ -74,6 +102,9 @@ public class PinballBonusManager : MonoBehaviour
   private int _shotsRemaining;
   private bool _featureActive;
   private bool _shotInFlight;
+  private bool _startPressed;
+  private Tween _startPulse;
+  private Vector3 _startButtonBaseScale;
   private bool _homesCaptured;
   private float _gameContentHomeY;
   private float _specialHomeY;
@@ -85,6 +116,11 @@ public class PinballBonusManager : MonoBehaviour
     {
       shootButton.onClick.RemoveListener(OnShootPressed);
       shootButton.onClick.AddListener(OnShootPressed);
+    }
+    if (bonusStartButton)
+    {
+      bonusStartButton.onClick.RemoveListener(OnStartPressed);
+      bonusStartButton.onClick.AddListener(OnStartPressed);
     }
   }
 
@@ -114,7 +150,100 @@ public class PinballBonusManager : MonoBehaviour
 
     yield return StartCoroutine(TransitionToBonus());
 
+    yield return StartCoroutine(ShowStartPromptAndWait());
+
+    yield return StartCoroutine(PlayBonusIntro());
+
     SetShootInteractable(_shotsRemaining > 0);
+  }
+
+  // After Start is pressed: the UFOs run a rotating chase-light flourish, then the ball rolls backwards
+  // around the outer ring to the first circle (the shoot point), ready for the first shot.
+  private IEnumerator PlayBonusIntro()
+  {
+    yield return StartCoroutine(UfoChaseRoutine());
+    yield return StartCoroutine(LightOuterPathReverseWithTrail());
+  }
+
+  // Rotating "line of lit UFOs": each authored step lights its own set of UFOs (all others dimmed); the
+  // steps cycle for ufoChaseDuration, then every UFO is restored to its default lit sprite.
+  private IEnumerator UfoChaseRoutine()
+  {
+    if (ufoChaseSteps == null || ufoChaseSteps.Count == 0 || ufos == null) yield break;
+
+    float elapsed = 0f;
+    int step = 0;
+    while (elapsed < ufoChaseDuration)
+    {
+      ApplyChaseStep(ufoChaseSteps[step]);
+      step = (step + 1) % ufoChaseSteps.Count;
+      yield return new WaitForSeconds(chaseStepInterval);
+      elapsed += chaseStepInterval;
+    }
+    SetAllUfos(true);   // restore default (lit)
+  }
+
+  private void ApplyChaseStep(UfoChaseStep s)
+  {
+    SetAllUfos(false);   // dim everything first
+    if (s?.litUfos == null || ufoLitSprite == null) return;
+    foreach (Ufo u in s.litUfos)
+      if (u && u.image) u.image.sprite = ufoLitSprite;   // light just this frame's set
+  }
+
+  private void SetAllUfos(bool lit)
+  {
+    Sprite sp = lit ? ufoLitSprite : ufoDimSprite;
+    if (sp == null || ufos == null) return;
+    foreach (Ufo u in ufos)
+      if (u && u.image) u.image.sprite = sp;
+  }
+
+  // Post-scroll gate: fade in the dark overlay + "BONUS TRIGGERED / PRESS BUTTON TO START" prompt and
+  // its start button together (one CanvasGroup), wait for the press, then fade them back out before the
+  // player's shots begin. No-op if the prompt isn't wired, so the bonus still runs without it.
+  private IEnumerator ShowStartPromptAndWait()
+  {
+    if (bonusStartGroup == null) yield break;
+
+    _startPressed = false;
+    bonusStartGroup.gameObject.SetActive(true);
+    bonusStartGroup.alpha = 0f;
+    bonusStartGroup.interactable = true;
+    bonusStartGroup.blocksRaycasts = true;   // overlay soaks up clicks so only the start button responds
+    StartStartButtonPulse();
+    yield return bonusStartGroup.DOFade(1f, startPromptFadeDuration).WaitForCompletion();
+
+    if (bonusStartButton)
+      yield return new WaitUntil(() => _startPressed);
+    else
+      Debug.LogWarning("[PinballBonus] bonusStartButton not assigned — start prompt can't be dismissed by a press; continuing.");
+
+    StopStartButtonPulse();
+    bonusStartGroup.gameObject.SetActive(false);   // instant off on press, no fade-out
+  }
+
+  private void OnStartPressed() => _startPressed = true;
+
+  // Smooth "breathing" pulse on the start button: yoyo scale with a slow InOutSine ease so it eases in
+  // and out naturally. Base scale is captured/restored so repeat bonuses don't drift the size.
+  private void StartStartButtonPulse()
+  {
+    if (bonusStartButton == null) return;
+    StopStartButtonPulse();
+    Transform t = bonusStartButton.transform;
+    _startButtonBaseScale = t.localScale;
+    _startPulse = t.DOScale(_startButtonBaseScale * startButtonPulseScale, startButtonPulseDuration)
+      .SetEase(Ease.InOutSine)
+      .SetLoops(-1, LoopType.Yoyo);
+  }
+
+  private void StopStartButtonPulse()
+  {
+    if (_startPulse == null) return;
+    _startPulse.Kill();
+    _startPulse = null;
+    if (bonusStartButton) bonusStartButton.transform.localScale = _startButtonBaseScale;
   }
 
   private IEnumerator EndBonus()
@@ -190,7 +319,7 @@ public class PinballBonusManager : MonoBehaviour
       BallRoute route = PickRoute(ufo.routes);
       if (route != null) yield return LightSequence(route.circles);
       ClearLight();
-      yield return FlashPrize(ufo.image);
+      yield return FlashPrize(ufo.group);
       ClearLight();
       yield break;
     }
@@ -215,13 +344,45 @@ public class PinballBonusManager : MonoBehaviour
       int trail = Mathf.RoundToInt(outerTrailMax * (1f - progress));
       for (int j = 0; j < n; j++)
       {
-        if (!outerPath[j]) continue;
         bool lit = j >= i - trail && j <= i + trail;
-        outerPath[j].sprite = lit ? circleLitSprite : circleUnlitSprite;
+        SetOuterSprite(j, lit);
       }
       yield return new WaitForSeconds(perCircleLightDuration);
     }
     _litCircle = outerPath[n - 1];   // single remaining lit circle; the inner route picks up from here
+  }
+
+  // Lights or unlights one outer-ring entry. The first outerMarbleLeadCount entries are marble graphics
+  // (shared marbleLit/marbleUnlit sprites); the rest are plain circles. One place owns that branch.
+  private void SetOuterSprite(int index, bool lit)
+  {
+    if (outerPath == null || index < 0 || index >= outerPath.Count) return;
+    Image img = outerPath[index];
+    if (!img) return;
+    bool isMarble = index < outerMarbleLeadCount;
+    if (lit) img.sprite = isMarble ? marbleLitSprite : circleLitSprite;
+    else img.sprite = isMarble ? marbleUnlitSprite : circleUnlitSprite;
+  }
+
+  // Ball entry: rolls the light backwards around the outer ring (last circle -> first/shoot circle) with
+  // the same comet trail, but shrinking toward the FIRST circle so it settles there as a single dot,
+  // ready for the first shot. Mirror of LightOuterPathWithTrail.
+  private IEnumerator LightOuterPathReverseWithTrail()
+  {
+    if (outerPath == null || outerPath.Count == 0) yield break;
+    int n = outerPath.Count;
+    for (int i = n - 1; i >= 0; i--)
+    {
+      float progress = n > 1 ? (float)(n - 1 - i) / (n - 1) : 1f;   // 0 at the start (i=n-1) -> 1 at the shoot circle (i=0)
+      int trail = Mathf.RoundToInt(outerTrailMax * (1f - progress));
+      for (int j = 0; j < n; j++)
+      {
+        bool lit = j >= i - trail && j <= i + trail;
+        SetOuterSprite(j, lit);
+      }
+      yield return new WaitForSeconds(perCircleLightDuration);
+    }
+    // outerPath[0] is left lit — the ball resting at the shoot point.
   }
 
   // Moves the single travelling light through the given circles in order. Continuous across calls,
@@ -249,6 +410,7 @@ public class PinballBonusManager : MonoBehaviour
     }
     Marble m = marbles[index];
     if (m != null && m.image && marbleLitSprite) m.image.sprite = marbleLitSprite;
+    if (m != null) yield return FlashPrize(m.group);   // celebrate the collect; the marble stays lit after
     yield return new WaitForSeconds(marbleLandHold);
   }
 
@@ -282,37 +444,47 @@ public class PinballBonusManager : MonoBehaviour
     _litCircle = null;
   }
 
-  // A flashing pulse on the landed prize (UFO or the final marble): alpha yoyo, restored to full.
-  private IEnumerator FlashPrize(Image img)
+  // Hard on/off blink on the landed prize (UFO or collected marble): toggles the CanvasGroup's alpha so
+  // the whole cluster — graphic, prize label, and (UFO) the +1 Shot label — flashes together, without a
+  // GameObject SetActive (no tweens killed, no OnEnable/OnDisable churn). Ends visible (alpha 1).
+  private IEnumerator FlashPrize(CanvasGroup group)
   {
-    if (!img) yield break;
-    img.DOKill();
-    img.DOFade(prizeFlashLowAlpha, prizeFlashHalfCycle).SetLoops(prizeFlashCount * 2, LoopType.Yoyo);
-    yield return new WaitForSeconds(prizeFlashCount * 2 * prizeFlashHalfCycle);
-    RestoreAlpha(img);
-  }
-
-  private static void RestoreAlpha(Image img)
-  {
-    Color c = img.color;
-    c.a = 1f;
-    img.color = c;
+    if (group == null) yield break;
+    group.alpha = 1f;
+    for (int i = 0; i < prizeFlashCount; i++)
+    {
+      group.alpha = 0f;
+      yield return new WaitForSeconds(prizeFlashHalfCycle);
+      group.alpha = 1f;
+      yield return new WaitForSeconds(prizeFlashHalfCycle);
+    }
   }
 
   private void ClearAllLights()
   {
     ClearLight();
     if (outerPath != null)
-      foreach (Image img in outerPath)
-        if (img) img.sprite = circleUnlitSprite;
+      for (int i = 0; i < outerPath.Count; i++)
+        SetOuterSprite(i, false);
+    // UFOs start every bonus unlit; the intro chase lights them and they stay lit afterwards. Reset the
+    // sprite here too (not just visibility) so a repeat bonus doesn't inherit the previous run's lit UFOs,
+    // and reset the CanvasGroup alpha to undo any interrupted score-blink.
     if (ufos != null)
       foreach (Ufo u in ufos)
-        if (u != null && u.image) RestoreAlpha(u.image);
-    // Reset the chute: every marble back to uncollected (unlit). Called at bonus start, so the
-    // accumulator starts empty; during a bonus, collected marbles are intentionally left lit.
+        if (u != null)
+        {
+          if (u.group) u.group.alpha = 1f;
+          if (u.image && ufoDimSprite) u.image.sprite = ufoDimSprite;
+        }
+    // Reset the chute: every marble back to uncollected (unlit) + full alpha. Called at bonus start, so
+    // the accumulator starts empty; during a bonus, collected marbles are intentionally left lit.
     if (marbles != null)
       foreach (Marble m in marbles)
-        if (m != null && m.image && marbleUnlitSprite) m.image.sprite = marbleUnlitSprite;
+        if (m != null)
+        {
+          if (m.group) m.group.alpha = 1f;
+          if (m.image && marbleUnlitSprite) m.image.sprite = marbleUnlitSprite;
+        }
   }
 
   // Sets each UFO/marble prize label from the init base values × the current line bet — i.e. the
@@ -388,6 +560,7 @@ public class PinballBonusManager : MonoBehaviour
     if (pinballSpecialUI)
       pinballSpecialUI.anchoredPosition = new Vector2(pinballSpecialUI.anchoredPosition.x, _specialHomeY + scrollDistance);
     if (bonusDecorations) bonusDecorations.alpha = 0f;
+    if (bonusFrontDecorations) bonusFrontDecorations.alpha = 0f;
 
     if (baseGameUI)
     {
@@ -406,21 +579,40 @@ public class PinballBonusManager : MonoBehaviour
     if (specialTween != null) yield return specialTween.WaitForCompletion();
     else if (machineTween != null) yield return machineTween.WaitForCompletion();
 
+    // Bonus decorations and the on-top-of-overlay front graphics fade in together (same duration).
+    Tween decoInTween = null;
     if (bonusDecorations)
     {
       bonusDecorations.blocksRaycasts = true;
       bonusDecorations.interactable = true;
-      yield return bonusDecorations.DOFade(1f, fadeDuration).WaitForCompletion();
+      decoInTween = bonusDecorations.DOFade(1f, fadeDuration);
     }
+    Tween frontInTween = null;
+    if (bonusFrontDecorations)
+    {
+      bonusFrontDecorations.blocksRaycasts = true;
+      bonusFrontDecorations.interactable = true;
+      frontInTween = bonusFrontDecorations.DOFade(1f, fadeDuration);
+    }
+    if (decoInTween != null) yield return decoInTween.WaitForCompletion();
+    else if (frontInTween != null) yield return frontInTween.WaitForCompletion();
   }
 
   private IEnumerator TransitionFromBonus()
   {
+    Tween decoOutTween = bonusDecorations ? bonusDecorations.DOFade(0f, fadeDuration) : null;
+    Tween frontOutTween = bonusFrontDecorations ? bonusFrontDecorations.DOFade(0f, fadeDuration) : null;
+    if (decoOutTween != null) yield return decoOutTween.WaitForCompletion();
+    else if (frontOutTween != null) yield return frontOutTween.WaitForCompletion();
     if (bonusDecorations)
     {
-      yield return bonusDecorations.DOFade(0f, fadeDuration).WaitForCompletion();
       bonusDecorations.blocksRaycasts = false;
       bonusDecorations.interactable = false;
+    }
+    if (bonusFrontDecorations)
+    {
+      bonusFrontDecorations.blocksRaycasts = false;
+      bonusFrontDecorations.interactable = false;
     }
 
     Tween machineTween = gameContentRoot
@@ -460,4 +652,13 @@ public class PinballBonusManager : MonoBehaviour
     if (bonusWinAmount) bonusWinAmount.text = amount.ToString("F2");
   }
   #endregion
+}
+
+// One frame of the UFO chase: the UFOs lit on this frame (all others dimmed). Author a list of these on
+// PinballBonusManager and the frames cycle to make the lit line rotate around the ring.
+[System.Serializable]
+public class UfoChaseStep
+{
+  [Tooltip("UFOs lit on this frame of the rotation; every other UFO is dimmed.")]
+  public List<Ufo> litUfos = new List<Ufo>();
 }

@@ -286,6 +286,7 @@ GameObject:
   - component: {fileID: 2123120638802509330}
   - component: {fileID: 4046668563575162491}
   - component: {fileID: 7226474621530822100}
+  - component: {fileID: 2849406086201045773}
   m_Layer: 5
   m_Name: UFO
   m_TagString: Untagged
@@ -342,7 +343,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 760776873134828032, guid: 9d955a64691fc90438a0113d194901e0, type: 3}
+  m_Sprite: {fileID: 3901333750411442158, guid: 9d955a64691fc90438a0113d194901e0, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -367,6 +368,19 @@ MonoBehaviour:
   isSpecial: 0
   prizeIndex: -1
   prizeAmount: {fileID: 8472273868173748721}
-  plusShotLabel: {fileID: 0}
+  plusShotLabel: {fileID: 4024968753447087421}
   routes: []
   image: {fileID: 4046668563575162491}
+  group: {fileID: 2849406086201045773}
+--- !u!225 &2849406086201045773
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7462016496390515752}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

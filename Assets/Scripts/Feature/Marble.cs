@@ -13,4 +13,7 @@ public class Marble : MonoBehaviour
 
   [Tooltip("The marble graphic whose sprite is swapped to the lit sprite when collected.")]
   public Image image;
+
+  [Tooltip("CanvasGroup on the marble root; its alpha is blinked when collected so the graphic and prize label flash together.")]
+  public CanvasGroup group;
 }

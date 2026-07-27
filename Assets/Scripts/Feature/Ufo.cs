@@ -22,4 +22,7 @@ public class Ufo : MonoBehaviour
 
   [Tooltip("The UFO graphic that flashes when the ball lands beside it.")]
   public Image image;
+
+  [Tooltip("CanvasGroup on the UFO root; its alpha is blinked on a score so the ship, prize label and +1 Shot label all flash together.")]
+  public CanvasGroup group;
 }

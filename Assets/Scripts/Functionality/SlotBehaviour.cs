@@ -143,7 +143,10 @@ public class SlotBehaviour : MonoBehaviour
   internal int BetCounter = 0;
   private double currentBalance = 0;
   private double currentTotalBet = 0;
-  protected int Lines = 5;
+  // Total stake = lineBet (bets[BetCounter]) * betMultiplier. In SL-PDG the multiplier is the config
+  // baseCoinValue (10), NOT the payline count (9) — the bets array is tuned so lineBet * 10 gives the
+  // clean total bets (0.01->0.1, 0.05->0.5, 0.1->1.0, ...). Sourced from GameFeatures on init.
+  private double betMultiplier = 1;
   private int numberOfSlots = 3;          //number of columns
   private int numberOfRows = 5;           //number of rows per column (3 real + 2 decorative edge rows)
   private bool StopSpinToggle;
@@ -395,8 +398,8 @@ public class SlotBehaviour : MonoBehaviour
     if (audioController) audioController.PlayButton();
     BetCounter = SocketManager.InitialData.bets.Count - 1;
     if (LineBet_text) LineBet_text.text = SocketManager.InitialData.bets[BetCounter].ToString();
-    if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * Lines).ToString();
-    currentTotalBet = SocketManager.InitialData.bets[BetCounter] * Lines;
+    if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * betMultiplier).ToString();
+    currentTotalBet = SocketManager.InitialData.bets[BetCounter] * betMultiplier;
     uiManager.SetBet(currentTotalBet);
   }
 
@@ -420,8 +423,8 @@ public class SlotBehaviour : MonoBehaviour
       }
     }
     if (LineBet_text) LineBet_text.text = SocketManager.InitialData.bets[BetCounter].ToString();
-    if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * Lines).ToString();
-    currentTotalBet = SocketManager.InitialData.bets[BetCounter] * Lines;
+    if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * betMultiplier).ToString();
+    currentTotalBet = SocketManager.InitialData.bets[BetCounter] * betMultiplier;
     uiManager.SetBet(currentTotalBet);
   }
 
@@ -488,7 +491,10 @@ public class SlotBehaviour : MonoBehaviour
     {
       for (int col = 0; col < initialMatrix.GetLength(1); col++)
       {
-        int val = initialMatrix[row, col];
+        // initialMatrix is a mask: cells preset to Blank (0) stay Blank; every other cell shows a
+        // random non-Blank symbol, so the board looks like a fresh random spin at startup. With the
+        // current preset that means rows 0/2/4 are randomised and rows 1/3 stay fully Blank.
+        int val = initialMatrix[row, col] == 0 ? 0 : UnityEngine.Random.Range(1, myImages.Length);
         TempImages[col].slotImages[row].sprite = myImages[val];
       }
     }
@@ -499,13 +505,13 @@ public class SlotBehaviour : MonoBehaviour
   {
     socketConnected = true;
     BetCounter = 0;
-    Lines = SocketManager.InitialData.totalLines;
+    betMultiplier = SocketManager.GameFeatures.baseCoinValue;
     if (LineBet_text) LineBet_text.text = SocketManager.InitialData.bets[BetCounter].ToString();
-    if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * Lines).ToString();
+    if (TotalBet_text) TotalBet_text.text = (SocketManager.InitialData.bets[BetCounter] * betMultiplier).ToString();
     if (TotalWin_text) TotalWin_text.text = "0.000";
     if (BalanceAmount) BalanceAmount.text = SocketManager.PlayerData.balance.ToString("F3");
     currentBalance = SocketManager.PlayerData.balance;
-    currentTotalBet = SocketManager.InitialData.bets[BetCounter] * Lines;
+    currentTotalBet = SocketManager.InitialData.bets[BetCounter] * betMultiplier;
     CompareBalance();
     uiManager.InitialiseUI(SocketManager.InitialData.bets, SocketManager.UIData.paylines.symbols);
     uiManager.SetBet(currentTotalBet);
