@@ -310,7 +310,7 @@ public class SlotBehaviour : MonoBehaviour
     } while (isFreeSpinActive);
 
     double totalFreeSpinWin = SocketManager.ResultData.payload.totalFreeSpinWin;
-    uiManager.PlayBonusWinSequence(totalFreeSpinWin, currentTotalBet);
+    uiManager.PlayBonusWinSequence(totalFreeSpinWin);
     uiManager.PlaySpinWin(totalFreeSpinWin);
 
     yield return new WaitForSeconds(specialReelSwapDelay);
@@ -518,6 +518,10 @@ public class SlotBehaviour : MonoBehaviour
   //starts the spin process
   private void StartSlots(bool autoSpin = false)
   {
+    // Don't let a spin interrupt the bonus-win celebration (it fires after the bonus scrolls back and
+    // runs over the main game). Scoped to the bonus win only — base spin/big wins keep spin-to-skip below.
+    if (uiManager.IsBonusWinActive) return;
+
     uiManager.SkipWinSequences();
 
     if (TotalWin_text && !IsFreeSpin) TotalWin_text.text = "0.000";

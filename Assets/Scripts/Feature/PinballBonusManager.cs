@@ -20,6 +20,7 @@ public class PinballBonusManager : MonoBehaviour
   [Header("References")]
   [SerializeField] private SocketIOManager socketManager;
   [SerializeField] private SlotBehaviour slotBehaviour;
+  [SerializeField] private UIManager uiManager;   // owns the bonus-win celebration (panel + count-up + fountain)
 
   [Header("Transition (scroll base machine out, bonus UI in)")]
   // Sibling movers: gameContentRoot (the base machine, GameContent) scrolls down/out while
@@ -65,6 +66,7 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private TMP_Text bonusWinAmount;
   [SerializeField] private TMP_Text totalBetAmount;
 
+
   [Header("Ring — Circles")]
   // All circles (outer loop + inner route circles) share the same two sprites, swapped to light up.
   [SerializeField] private Sprite circleLitSprite;
@@ -99,6 +101,7 @@ public class PinballBonusManager : MonoBehaviour
   // Runtime state
   private int _betIndex;
   private double _totalBet;
+  private double _totalBonusWin;
   private int _shotsRemaining;
   private bool _featureActive;
   private bool _shotInFlight;
@@ -249,10 +252,12 @@ public class PinballBonusManager : MonoBehaviour
   private IEnumerator EndBonus()
   {
     SetShootInteractable(false);
-    // TODO (with team): optional final bonus-win flourish before we leave. Balance is already
-    // credited by the backend on the isOver shot, so the display resync happens in OnBonusComplete.
     yield return new WaitForSeconds(endHoldDuration);
     yield return StartCoroutine(TransitionFromBonus());
+    // Scrolled back to the main game — hand the total to UIManager, which owns the win celebration
+    // (panel + count-up + coin fountain). Fire-and-forget: it sets IsBonusWinActive, and StartSlots
+    // blocks spins while that's true, so we don't need to wait here.
+    if (uiManager) uiManager.PlayBonusWinSequence(_totalBonusWin);
     _featureActive = false;
     if (slotBehaviour) slotBehaviour.OnBonusComplete();
   }
@@ -284,8 +289,9 @@ public class PinballBonusManager : MonoBehaviour
 
     // Trust the backend's post-shot state for the displays and the next enable/disable decision.
     _shotsRemaining = p.bonusState.shotsRemaining;
+    _totalBonusWin = p.bonusState.totalBonusWin;
     UpdateShotsAmount(_shotsRemaining);
-    UpdateBonusWinAmount(p.bonusState.totalBonusWin);
+    UpdateBonusWinAmount(_totalBonusWin);
 
     _shotInFlight = false;
 

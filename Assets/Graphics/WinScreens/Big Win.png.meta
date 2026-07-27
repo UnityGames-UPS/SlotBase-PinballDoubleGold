@@ -1,28 +1,13 @@
 fileFormatVersion: 2
-guid: c3866ac7093de0f43856efc9c9cdf124
+guid: b46d41d7e1fcd3c459aa0649355c494d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -549973669336825421
-    second: blue box no._0
+      213: 989584708667291416
+    second: Big Win_0
   - first:
-      213: 6663356644849423777
-    second: blue box no._1
-  - first:
-      213: -8941521489531146403
-    second: blue box no._2
-  - first:
-      213: -7714307990059803951
-    second: blue box no._3
-  - first:
-      213: 2798880169056530365
-    second: blue box no._4
-  - first:
-      213: -417852956594579787
-    second: blue box no._5
-  - first:
-      213: -6218863767387215155
-    second: blue box no._6
+      213: -8729708050907637584
+    second: Big Win_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -64,7 +49,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -144,13 +129,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: blue box no._0
+      name: Big Win_0
       rect:
         serializedVersion: 2
-        x: 25
-        y: 268
-        width: 84
-        height: 130
+        x: 56
+        y: 19
+        width: 191
+        height: 119
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,20 +144,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3b14c539cd91e58f0800000000000000
-      internalID: -549973669336825421
+      spriteID: 817b54bac06bbbd00800000000000000
+      internalID: 989584708667291416
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: blue box no._1
+      name: Big Win_1
       rect:
         serializedVersion: 2
-        x: 149
-        y: 268
-        width: 103
-        height: 131
+        x: 263
+        y: 19
+        width: 201
+        height: 118
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,118 +166,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1a51df3809ff87c50800000000000000
-      internalID: 6663356644849423777
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: blue box no._2
-      rect:
-        serializedVersion: 2
-        x: 284
-        y: 269
-        width: 99
-        height: 130
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d5f69f8549559e380800000000000000
-      internalID: -8941521489531146403
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: blue box no._3
-      rect:
-        serializedVersion: 2
-        x: 14
-        y: 136
-        width: 105
-        height: 131
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1da178451c541f490800000000000000
-      internalID: -7714307990059803951
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: blue box no._4
-      rect:
-        serializedVersion: 2
-        x: 150
-        y: 135
-        width: 101
-        height: 131
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: dbfef754fae97d620800000000000000
-      internalID: 2798880169056530365
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: blue box no._5
-      rect:
-        serializedVersion: 2
-        x: 282
-        y: 136
-        width: 102
-        height: 129
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5b655d923fc733af0800000000000000
-      internalID: -417852956594579787
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: blue box no._6
-      rect:
-        serializedVersion: 2
-        x: 20
-        y: 3
-        width: 95
-        height: 130
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: dca665e3a5822b9a0800000000000000
-      internalID: -6218863767387215155
+      spriteID: 0b858c897c8d9d680800000000000000
+      internalID: -8729708050907637584
       vertices: []
       indices: 
       edges: []
@@ -301,7 +176,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -311,13 +186,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      blue box no._0: -549973669336825421
-      blue box no._1: 6663356644849423777
-      blue box no._2: -8941521489531146403
-      blue box no._3: -7714307990059803951
-      blue box no._4: 2798880169056530365
-      blue box no._5: -417852956594579787
-      blue box no._6: -6218863767387215155
+      Big Win_0: 989584708667291416
+      Big Win_1: -8729708050907637584
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

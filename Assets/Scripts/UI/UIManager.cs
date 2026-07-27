@@ -72,26 +72,20 @@ public class UIManager : MonoBehaviour
 
   [Header("Bonus Win Sequence")]
   [SerializeField] private GameObject BonusWinSequencePanel;
-  [SerializeField] private ImageAnimation BonusWinCoinFallingAnim;
+  [SerializeField] private CoinFountainPool coinFountainPool;   // pooled coin-spray; replaces the old fullscreen coin ImageAnimation
   [SerializeField] private RectTransform BonusWinPanel;
-  [SerializeField] private Image BonusNameGraphicImage;
   [SerializeField] private TMP_Text BonusWinAmountText;
-  [SerializeField] private Sprite BigWinTierSprite;
-  [SerializeField] private Sprite MegaWinTierSprite;
-  [SerializeField] private Sprite SuperWinTierSprite;
   [SerializeField] private float bonusWinShowDelay = 1f;
   [SerializeField] private float bonusWinScaleDuration = 0.4f;
   [SerializeField] private float bonusWinCountDuration = 1.5f;
   [SerializeField] private float bonusWinHoldDuration = 2f;
-
-  private const double BigWinThreshold = 3;
-  private const double MegaWinThreshold = 6;
-  private const double SuperWinThreshold = 10;
+  [SerializeField] private float bonusWinCoinFadeDuration = 0.5f;   // coin fountain fade-out at the end
 
   private bool _spinWinActive;
   private bool _bonusWinActive;
   private bool _bigWinActive;
   internal bool IsWinSequenceActive => _spinWinActive || _bonusWinActive || _bigWinActive;
+  internal bool IsBonusWinActive => _bonusWinActive;   // spin-start blocks on this so the bonus win can't be skipped
 
   private Coroutine _spinWinCoroutine;
   private Coroutine _bonusWinCoroutine;
@@ -245,7 +239,7 @@ public class UIManager : MonoBehaviour
 
   private void Start()
   {
-    // StartCoroutine(DebugBonusWinPreview());
+    StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
 
     if (Menu_Button) Menu_Button.onClick.RemoveAllListeners();
     if (Menu_Button) Menu_Button.onClick.AddListener(OpenMenu);
@@ -726,52 +720,22 @@ public class UIManager : MonoBehaviour
     tickerTween = TickerText.rectTransform.DOAnchorPosX(endX, TickerDuration).SetEase(Ease.Linear);
   }
 
-  private Sprite GetBonusWinTierSprite(string tier)
-  {
-    switch (tier)
-    {
-      case "big": return BigWinTierSprite;
-      case "mega": return MegaWinTierSprite;
-      case "super": return SuperWinTierSprite;
-      default: return null;
-    }
-  }
-
-  private static string GetBonusWinTier(double totalWin, double bet)
-  {
-    if (bet <= 0) return null;
-    double ratio = totalWin / bet;
-    if (ratio >= SuperWinThreshold) return "super";
-    if (ratio >= MegaWinThreshold) return "mega";
-    if (ratio >= BigWinThreshold) return "big";
-    return null;
-  }
-
-  internal void PlayBonusWinSequence(double totalWin, double bet)
+  internal void PlayBonusWinSequence(double totalWin)
   {
     if (_bonusWinCoroutine != null) StopCoroutine(_bonusWinCoroutine);
-    _bonusWinCoroutine = StartCoroutine(BonusWinRoutine(totalWin, bet));
+    _bonusWinCoroutine = StartCoroutine(BonusWinRoutine(totalWin));
   }
 
-  private IEnumerator BonusWinRoutine(double totalWin, double bet)
+  private IEnumerator BonusWinRoutine(double totalWin)
   {
-    string tier = GetBonusWinTier(totalWin, bet);
-    if (tier == null) yield break;
-
     _bonusWinActive = true;
-
-    if (GameContent)
-    {
-      GameContent.DOKill();
-      GameContent.DOScale(Vector3.one * 0.7f, 0.5f).SetDelay(1.7f);
-    }
 
     yield return new WaitForSeconds(bonusWinShowDelay);
 
-    if (BonusNameGraphicImage) BonusNameGraphicImage.sprite = GetBonusWinTierSprite(tier);
     if (BonusWinAmountText) BonusWinAmountText.text = "0.000";
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(true);
     if (BonusWinPanel) { ImageAnimation panelAnim = BonusWinPanel.GetComponent<ImageAnimation>(); if (panelAnim) panelAnim.StartAnimation(); }
+    if (coinFountainPool) coinFountainPool.StartFountain();   // pooled coins spray up from the panel (was the fullscreen ImageAnimation)
 
     if (audioManager) audioManager.PlaySuperBonusWinner();
 
@@ -782,16 +746,16 @@ public class UIManager : MonoBehaviour
     else
       yield return new WaitForSeconds(bonusWinCountDuration);
 
-    yield return new WaitForSeconds(Mathf.Max(0f, bonusWinHoldDuration - 0.5f));
+    yield return new WaitForSeconds(bonusWinHoldDuration);
 
-    if (GameContent)
+    // Stop new waves, fade the coins still in the air, then reclaim them.
+    if (coinFountainPool)
     {
-      GameContent.DOKill();
-      GameContent.DOScale(Vector3.one, 0.5f);
+      coinFountainPool.StopFountain();
+      coinFountainPool.FadeOutAllActive(bonusWinCoinFadeDuration);
     }
-    yield return new WaitForSeconds(0.5f);
-
-    if (BonusWinCoinFallingAnim) { BonusWinCoinFallingAnim.StopAnimation(); BonusWinCoinFallingAnim.doLoopAnimation = false; }
+    yield return new WaitForSeconds(bonusWinCoinFadeDuration);
+    if (coinFountainPool) coinFountainPool.ClearAll();
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(false);
     _bonusWinActive = false;
     _bonusWinCoroutine = null;
@@ -898,7 +862,7 @@ public class UIManager : MonoBehaviour
     if (BigWinAmountText) { DOTween.Kill(BigWinAmountText); BigWinAmountText.rectTransform.DOKill(); }
 
     HideSpinWin();
-    if (BonusWinCoinFallingAnim) { BonusWinCoinFallingAnim.StopAnimation(); BonusWinCoinFallingAnim.doLoopAnimation = false; }
+    if (coinFountainPool) coinFountainPool.ClearAll();
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(false);
     if (BigWinSequencePanel) BigWinSequencePanel.SetActive(false);
     if (GameContent) { GameContent.DOKill(); GameContent.localScale = Vector3.one; }
@@ -909,12 +873,15 @@ public class UIManager : MonoBehaviour
   }
 
   // TODO: Add scale animation for BonusWinAmountText — frames/timing TBD with team
-  // private IEnumerator DebugBonusWinPreview()
-  // {
-  //   yield return new WaitForSeconds(1.0f);
-  //   yield return StartCoroutine(ShowBonusWinSequence(100, 10));
-  //   yield return new WaitForSeconds(0.5f);
-  //   yield return StartCoroutine(ShowBonusWinSequence(100, 10));
-  // }
+  // TEMP TEST: at startup wait 1s, play the bonus win sequence, wait until it finishes and deactivates,
+  // then wait 1.5s and play it again. Remove this and its StartCoroutine call in Start() when done.
+  private IEnumerator DebugBonusWinPreview()
+  {
+    yield return new WaitForSeconds(1f);
+    PlayBonusWinSequence(100);
+    yield return new WaitUntil(() => !_bonusWinActive);
+    yield return new WaitForSeconds(1.5f);
+    PlayBonusWinSequence(100);
+  }
 
 }
