@@ -34,7 +34,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip clipBallTick;        // ball travelling the ring (loop)
     [SerializeField] private AudioClip clipBallStop;        // ball lands/stops on a prize
     [SerializeField] private AudioClip clipBonusComplete;   // bonus-complete sting
-    [SerializeField] private AudioClip clipBigWin;          // big-win celebration (base big win + pinball bonus win)
+    [SerializeField] private AudioClip clipBigWin;          // big-win celebration (pinball bonus win)
 
     private bool _musicEnabled = true;
     private bool _sfxEnabled = true;

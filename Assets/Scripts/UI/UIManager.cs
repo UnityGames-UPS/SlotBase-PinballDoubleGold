@@ -40,38 +40,23 @@ public class UIManager : MonoBehaviour
   // The main game content root, scaled by win sequences (SkipWinSequences resets it). Not an intro.
   [SerializeField] private RectTransform GameContent;
 
-  [Header("Big Win Sequence")]
-  [SerializeField] private GameObject BigWinSequencePanel;
-  [SerializeField] private RectTransform BigWinPanel;
-  [SerializeField] private RectTransform BigWinAmountPanel;
-  [SerializeField] private TMP_Text BigWinAmountText;
-  [SerializeField] private float bigWinShowDelay = 0f;
-  [SerializeField] private float bigWinCountDuration = 1.5f;
-  [SerializeField] private float bigWinHoldDuration = 6.5f;
-  [SerializeField] private int bigWinAmountShowFrame = 105;
-  [SerializeField] private int bigWinAmountHideFrame = 175;
-
   [Header("Bonus Win Sequence")]
   [SerializeField] private GameObject BonusWinSequencePanel;
-  [SerializeField] private CoinFountainPool coinFountainPool;   // pooled coin-spray; replaces the old fullscreen coin ImageAnimation
+  [SerializeField] private ImageAnimation BonusWinCoinFallingAnim;   // fullscreen coin shower (looping)
   [SerializeField] private RectTransform BonusWinPanel;
   [SerializeField] private TMP_Text BonusWinAmountText;
   [SerializeField] private float bonusWinShowDelay = 1f;
   [SerializeField] private float bonusWinScaleDuration = 0.4f;
   [SerializeField] private float bonusWinCountDuration = 1.5f;
   [SerializeField] private float bonusWinHoldDuration = 2f;
-  [SerializeField] private float bonusWinCoinFadeDuration = 0.5f;   // coin fountain fade-out at the end
 
   private bool _spinWinActive;
   private bool _bonusWinActive;
-  private bool _bigWinActive;
-  internal bool IsWinSequenceActive => _spinWinActive || _bonusWinActive || _bigWinActive;
+  internal bool IsWinSequenceActive => _spinWinActive || _bonusWinActive;
   internal bool IsBonusWinActive => _bonusWinActive;   // spin-start blocks on this so the bonus win can't be skipped
 
   private Coroutine _spinWinCoroutine;
   private Coroutine _bonusWinCoroutine;
-  private Coroutine _bigWinCoroutine;
-  private Coroutine _bigWinAmountCoroutine;
 
   [Header("Ticker UI")]
   [SerializeField] private RectTransform TickerContainer;
@@ -220,7 +205,7 @@ public class UIManager : MonoBehaviour
 
   private void Start()
   {
-    // StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
+    StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
 
     if (Menu_Button) Menu_Button.onClick.RemoveAllListeners();
     if (Menu_Button) Menu_Button.onClick.AddListener(OpenMenu);
@@ -467,7 +452,7 @@ public class UIManager : MonoBehaviour
   private IEnumerator SpinWinRoutine(double winAmount)
   {
     if (winAmount <= 0) yield break;
-    if (_bigWinActive || _bonusWinActive) yield break;
+    if (_bonusWinActive) yield break;
     _spinWinActive = true;
     if (audioManager) audioManager.PlayNormalIcon();
     if (SpinWinPanel)
@@ -610,7 +595,7 @@ public class UIManager : MonoBehaviour
     if (BonusWinAmountText) BonusWinAmountText.text = "0.000";
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(true);
     if (BonusWinPanel) { ImageAnimation panelAnim = BonusWinPanel.GetComponent<ImageAnimation>(); if (panelAnim) panelAnim.StartAnimation(); }
-    if (coinFountainPool) coinFountainPool.StartFountain();   // pooled coins spray up from the panel (was the fullscreen ImageAnimation)
+    if (BonusWinCoinFallingAnim) { BonusWinCoinFallingAnim.doLoopAnimation = true; BonusWinCoinFallingAnim.StartAnimation(); }
 
     if (audioManager) audioManager.PlayBigWin();
 
@@ -623,14 +608,7 @@ public class UIManager : MonoBehaviour
 
     yield return new WaitForSeconds(bonusWinHoldDuration);
 
-    // Stop new waves, fade the coins still in the air, then reclaim them.
-    if (coinFountainPool)
-    {
-      coinFountainPool.StopFountain();
-      coinFountainPool.FadeOutAllActive(bonusWinCoinFadeDuration);
-    }
-    yield return new WaitForSeconds(bonusWinCoinFadeDuration);
-    if (coinFountainPool) coinFountainPool.ClearAll();
+    if (BonusWinCoinFallingAnim) { BonusWinCoinFallingAnim.StopAnimation(); BonusWinCoinFallingAnim.doLoopAnimation = false; }
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(false);
     _bonusWinActive = false;
     _bonusWinCoroutine = null;
@@ -650,101 +628,23 @@ public class UIManager : MonoBehaviour
     if (WildComboPayoutOverlay) WildComboPayoutOverlay.SetActive(index == wildComboPayoutSlideIndex);
   }
 
-  internal void PlayBigWinSequence(double totalWin)
-  {
-    if (_bigWinCoroutine != null) StopCoroutine(_bigWinCoroutine);
-    _bigWinCoroutine = StartCoroutine(BigWinRoutine(totalWin));
-  }
-
-  private IEnumerator BigWinRoutine(double totalWin)
-  {
-    _bigWinActive = true;
-
-    yield return new WaitForSeconds(bigWinShowDelay);
-
-    if (BigWinAmountText) { BigWinAmountText.text = "0.000"; BigWinAmountText.gameObject.SetActive(false); }
-    if (BigWinSequencePanel) BigWinSequencePanel.SetActive(true);
-    // BigWinAmountPanel scale-in disabled — board is now baked into the new BigWinPanel animation.
-    // Deactivated in-scene instead of removed in case it's needed again later.
-    // if (BigWinAmountPanel)
-    // {
-    //   Vector3 finalScale = BigWinAmountPanel.localScale;
-    //   BigWinAmountPanel.localScale = Vector3.zero;
-    //   BigWinAmountPanel.DOScale(finalScale, 0.6f).SetEase(Ease.OutBack).SetDelay(0.2f);
-    // }
-    ImageAnimation panelAnim = null;
-    if (BigWinPanel)
-    {
-      panelAnim = BigWinPanel.GetComponent<ImageAnimation>();
-      if (panelAnim) panelAnim.StartAnimation();
-    }
-    if (audioManager) audioManager.PlayBigWin();
-
-    if (_bigWinAmountCoroutine != null) StopCoroutine(_bigWinAmountCoroutine);
-    _bigWinAmountCoroutine = StartCoroutine(BigWinAmountRoutine(panelAnim, totalWin));
-
-    yield return new WaitForSeconds(bigWinCountDuration + bigWinHoldDuration);
-
-    if (BigWinSequencePanel) BigWinSequencePanel.SetActive(false);
-    _bigWinActive = false;
-    _bigWinCoroutine = null;
-  }
-
-  private IEnumerator BigWinAmountRoutine(ImageAnimation panelAnim, double totalWin)
-  {
-    if (BigWinAmountText == null) yield break;
-
-    float showAt = 0f;
-    float hideAt = 0f;
-    if (panelAnim != null && panelAnim.textureArray != null && panelAnim.textureArray.Count > 0)
-    {
-      float perFrameDelay = panelAnim.GetTotalDuration() / panelAnim.textureArray.Count;
-      showAt = perFrameDelay * bigWinAmountShowFrame;
-      hideAt = perFrameDelay * bigWinAmountHideFrame;
-    }
-
-    yield return new WaitForSeconds(showAt);
-
-    BigWinAmountText.text = "0.000";
-    BigWinAmountText.gameObject.SetActive(true);
-    Vector3 finalTextScale = BigWinAmountText.rectTransform.localScale;
-    BigWinAmountText.rectTransform.localScale = Vector3.zero;
-    BigWinAmountText.rectTransform.DOScale(finalTextScale, 0.6f).SetEase(Ease.OutBack);
-
-    float bigWinDisplay = 0f;
-    DOTween.To(() => bigWinDisplay, v => { bigWinDisplay = v; BigWinAmountText.text = v.ToString("F3"); },
-      (float)totalWin, bigWinCountDuration).SetTarget(BigWinAmountText);
-
-    yield return new WaitForSeconds(Mathf.Max(0f, hideAt - showAt));
-
-    DOTween.Kill(BigWinAmountText);
-    BigWinAmountText.rectTransform.DOKill();
-    BigWinAmountText.gameObject.SetActive(false);
-    _bigWinAmountCoroutine = null;
-  }
-
   internal void SkipWinSequences()
   {
     if (_spinWinCoroutine != null) { StopCoroutine(_spinWinCoroutine); _spinWinCoroutine = null; }
     if (_bonusWinCoroutine != null) { StopCoroutine(_bonusWinCoroutine); _bonusWinCoroutine = null; }
-    if (_bigWinCoroutine != null) { StopCoroutine(_bigWinCoroutine); _bigWinCoroutine = null; }
-    if (_bigWinAmountCoroutine != null) { StopCoroutine(_bigWinAmountCoroutine); _bigWinAmountCoroutine = null; }
 
     if (SpinWinPanel) SpinWinPanel.transform.DOKill();
     if (TotalWin_text) DOTween.Kill(TotalWin_text);
     if (SpinWinText) DOTween.Kill(SpinWinText);
     if (BonusWinAmountText) DOTween.Kill(BonusWinAmountText);
-    if (BigWinAmountText) { DOTween.Kill(BigWinAmountText); BigWinAmountText.rectTransform.DOKill(); }
 
     HideSpinWin();
-    if (coinFountainPool) coinFountainPool.ClearAll();
+    if (BonusWinCoinFallingAnim) { BonusWinCoinFallingAnim.StopAnimation(); BonusWinCoinFallingAnim.doLoopAnimation = false; }
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(false);
-    if (BigWinSequencePanel) BigWinSequencePanel.SetActive(false);
     if (GameContent) { GameContent.DOKill(); GameContent.localScale = Vector3.one; }
 
     _spinWinActive = false;
     _bonusWinActive = false;
-    _bigWinActive = false;
   }
 
   // TODO: Add scale animation for BonusWinAmountText — frames/timing TBD with team
