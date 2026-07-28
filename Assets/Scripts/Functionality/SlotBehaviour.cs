@@ -89,21 +89,10 @@ public class SlotBehaviour : MonoBehaviour
   [SerializeField] private float pinballFlashHalfCycle = 0.3f;
   [SerializeField] private float pinballFlashMinAlpha = 0.2f;
 
-  [Header("Free Spin Special Reel")]
-  [SerializeField] private GameObject SpecialReelObject;
-  [SerializeField] private Transform SpecialReelTransform;
-  [SerializeField] private GameObject MiddleReelObject;
-  [SerializeField] private GameObject MiddleReelGlow;
-  [SerializeField] private GameObject LastReelGlow;
-  [SerializeField] internal GameObject FreeSpinSlotMachine;
-  [SerializeField] private SlotImage SpecialReelSlotImages;
-  private float specialReelSwapDelay = 2.3f;
-
   [Header("Reel Motion")]
   // Reel travel speed in local units/second. Durations are derived from this so every move
   // (intro, loop, landing) runs at a constant speed regardless of distance.
   [SerializeField] private float reelSpeed = 8350f;
-  [SerializeField] private float specialReelSpeed = 1670f;
 
   // The looping spin sweeps TopY -> BottomY and snaps back. TopY - BottomY must be an exact
   // multiple of the spin band's icon pitch or the snap is visible.
@@ -111,16 +100,10 @@ public class SlotBehaviour : MonoBehaviour
   [SerializeField] private float ReelBottomY;
   [SerializeField] private float ReelRestY = 3393.2f;
 
-  [SerializeField] private float SpecialReelTopY;
-  [SerializeField] private float SpecialReelBottomY;
-  [SerializeField] private float SpecialReelRestY = 3393.2f;
-
   [SerializeField] private Ease landEase = Ease.OutBack;
   [SerializeField] private float landOvershoot = 0.9f;
 
-  // Base columns occupy 0..numberOfSlots-1; the free-spin special column gets its own slot.
-  private const int SpecialReelIndex = 3;
-  private readonly Tween[] reelTweens = new Tween[4];
+  private readonly Tween[] reelTweens = new Tween[3];   // one per base column
   private Coroutine _paylineCycleCoroutine;
   [SerializeField] private float paylineHoldDuration = 1.5f;
   [SerializeField] private float paylineAllTogetherDuration = 1.5f;
@@ -132,12 +115,10 @@ public class SlotBehaviour : MonoBehaviour
   private SocketIOManager SocketManager;
 
   private Coroutine AutoSpinRoutine = null;
-  private Coroutine FreeSpinRoutine = null;
   private Coroutine tweenroutine;
   private Tween BalanceTween;
   private Sprite _spinPressedSprite;
   internal bool IsAutoSpin = false;
-  internal bool IsFreeSpin = false;
   private bool IsSpinning = false;
   internal bool CheckPopups = false;
   internal int BetCounter = 0;
@@ -153,8 +134,6 @@ public class SlotBehaviour : MonoBehaviour
   private float SpinDelay = 0.2f;
   [SerializeField] private float autoSpinExtraDelay = 0.0f;
   private float minSpinDuration = 1.5f;
-  internal bool WasAutoSpinOn;
-  private bool _isFirstFreeSpin;
   private int lastWinLineCount = 0;
   internal bool socketConnected = false;
   private int[,] initialMatrix = new int[,]
@@ -251,96 +230,6 @@ public class SlotBehaviour : MonoBehaviour
     }
     yield return new WaitUntil(() => !IsSpinning);
     ToggleButtonGrp(true);
-  }
-  #endregion
-
-  #region FreeSpin
-  internal void FreeSpin(int spins)
-  {
-    if (!IsFreeSpin)
-    {
-      uiManager.UpdateFreeSpinsRemaining(spins);
-      IsFreeSpin = true;
-      if (FreeSpinSlotMachine)
-      {
-        CanvasGroup freeSpinSlotMachineCanvasGroup = FreeSpinSlotMachine.GetComponent<CanvasGroup>();
-        if (freeSpinSlotMachineCanvasGroup)
-        {
-          freeSpinSlotMachineCanvasGroup.DOKill();
-          freeSpinSlotMachineCanvasGroup.alpha = 1f;
-        }
-        FreeSpinSlotMachine.SetActive(true);
-        ImageAnimation freeSpinReelAnim = FreeSpinSlotMachine.GetComponent<ImageAnimation>();
-        if (freeSpinReelAnim) freeSpinReelAnim.StartAnimation();
-      }
-      ToggleButtonGrp(false);
-      if (Spin_Button)
-      {
-        Spin_Button.interactable = false;
-        Spin_Button.GetComponent<Image>().sprite = SpinDeactivatedSprite;
-      }
-
-      if (FreeSpinRoutine != null)
-      {
-        StopCoroutine(FreeSpinRoutine);
-        FreeSpinRoutine = null;
-      }
-      FreeSpinRoutine = StartCoroutine(FreeSpinCoroutine(spins));
-    }
-  }
-
-  private IEnumerator FreeSpinCoroutine(int spinchances)
-  {
-    yield return new WaitForSecondsRealtime(1.5f);
-    uiManager.UpdateFreeSpinsRemaining(spinchances);
-    bool isFreeSpinActive;
-    bool isFirstFreeSpin = true;
-    do
-    {
-      _isFirstFreeSpin = isFirstFreeSpin;
-      StartSlots();
-      yield return tweenroutine;
-      if (SocketManager.ResultData.payload.winAmount > 0)
-        yield return WaitForFreeSpinWinDisplay();
-      else
-        yield return new WaitForSeconds(SpinDelay);
-      isFreeSpinActive = SocketManager.ResultData.payload.isFreeSpinActive;
-      uiManager.UpdateFreeSpinsRemaining(SocketManager.ResultData.payload.freeSpinsRemaining);
-      isFirstFreeSpin = false;
-    } while (isFreeSpinActive);
-
-    double totalFreeSpinWin = SocketManager.ResultData.payload.totalFreeSpinWin;
-    uiManager.PlayBonusWinSequence(totalFreeSpinWin);
-    uiManager.PlaySpinWin(totalFreeSpinWin);
-
-    yield return new WaitForSeconds(specialReelSwapDelay);
-    if (SpecialReelObject) SpecialReelObject.SetActive(false);
-    if (MiddleReelObject) MiddleReelObject.SetActive(true);
-    if (MiddleReelGlow) MiddleReelGlow.SetActive(false);
-    if (FreeSpinSlotMachine) FreeSpinSlotMachine.SetActive(false);
-    uiManager.EndFreeSpinTriggerSequence();
-
-    if (totalFreeSpinWin > 0)
-      yield return WaitForFreeSpinWinDisplay();
-
-    IsFreeSpin = false;
-    if (WasAutoSpinOn)
-    {
-      WasAutoSpinOn = false;
-      AutoSpin();
-    }
-    else
-    {
-      ToggleButtonGrp(true);
-    }
-  }
-
-  // Waits for the win popup and, if there were winning paylines, for each to get its full display time.
-  private IEnumerator WaitForFreeSpinWinDisplay()
-  {
-    float paylineCycleDuration = lastWinLineCount * paylineHoldDuration;
-    float waitStart = Time.time;
-    yield return new WaitUntil(() => !uiManager.IsWinSequenceActive && Time.time - waitStart >= paylineCycleDuration);
   }
   #endregion
 
@@ -524,7 +413,7 @@ public class SlotBehaviour : MonoBehaviour
 
     uiManager.SkipWinSequences();
 
-    if (TotalWin_text && !IsFreeSpin) TotalWin_text.text = "0.000";
+    if (TotalWin_text) TotalWin_text.text = "0.000";
 
     if (!autoSpin)
     {
@@ -555,7 +444,7 @@ public class SlotBehaviour : MonoBehaviour
   //manage the Routine for spinning of the slots
   private IEnumerator TweenRoutine()
   {
-    if (currentBalance < currentTotalBet && !IsFreeSpin)
+    if (currentBalance < currentTotalBet)
     {
       CompareBalance();
       StopAutoSpin();
@@ -567,38 +456,15 @@ public class SlotBehaviour : MonoBehaviour
 
     IsSpinning = true;
 
-    if (IsFreeSpin && _isFirstFreeSpin)
+    ActivateStopButton();
+    for (int i = 0; i < numberOfSlots; i++)
     {
-      InitializeReelSpin(SpecialReelTransform, SpecialReelIndex, SpecialReelTopY, SpecialReelBottomY, specialReelSpeed);
-      yield return new WaitForSeconds(2f);
-      ActivateStopButton();
-      if (audioController) audioController.PlaySpecialReelSpin();
-      for (int i = 0; i < numberOfSlots; i++)
-        InitializeReelSpin(Slot_Transform[i], i, ReelTopY, ReelBottomY, reelSpeed);
-    }
-    else if (IsFreeSpin)
-    {
-      ActivateStopButton();
-      InitializeReelSpin(SpecialReelTransform, SpecialReelIndex, SpecialReelTopY, SpecialReelBottomY, specialReelSpeed);
-      if (audioController) audioController.PlaySpecialReelSpin();
-      for (int i = 0; i < numberOfSlots; i++)
-        InitializeReelSpin(Slot_Transform[i], i, ReelTopY, ReelBottomY, reelSpeed);
-    }
-    else
-    {
-      ActivateStopButton();
-      for (int i = 0; i < numberOfSlots; i++)
-      {
-        InitializeReelSpin(Slot_Transform[i], i, ReelTopY, ReelBottomY, reelSpeed);
-        yield return new WaitForSeconds(0.1f);
-      }
+      InitializeReelSpin(Slot_Transform[i], i, ReelTopY, ReelBottomY, reelSpeed);
+      yield return new WaitForSeconds(0.1f);
     }
     float spinStartTime = Time.time;
 
-    if (!IsFreeSpin)
-    {
-      BalanceDeduction();
-    }
+    BalanceDeduction();
 
     SocketManager.AccumulateResult(BetCounter);
     yield return new WaitUntil(() => SocketManager.isResultdone);
@@ -609,22 +475,9 @@ public class SlotBehaviour : MonoBehaviour
     {
       for (int j = 0; j < numberOfSlots; j++)
       {
-        // Column 1 is hidden behind the special wilds reel during free spins — leave it showing
-        // whatever it last had before free spins started rather than a stale free-spin wild.
-        if (IsFreeSpin && j == 1) continue;
-
         int resultNum = _displayMatrix[i, j];
         TempImages[j].slotImages[i].sprite = myImages[resultNum];
         TempImages[j].slotImages[i].rectTransform.sizeDelta = ScatterSymbolBaseSize;
-      }
-    }
-
-    if (IsFreeSpin && SpecialReelSlotImages != null)
-    {
-      for (int row = 0; row < numberOfRows && row < SpecialReelSlotImages.slotImages.Count; row++)
-      {
-        int resultNum = _displayMatrix[row, 1];
-        SpecialReelSlotImages.slotImages[row].sprite = myImages[resultNum];
       }
     }
 
@@ -647,11 +500,10 @@ public class SlotBehaviour : MonoBehaviour
       }
     }
 
-    bool willTriggerFreeSpin = SocketManager.ResultData.features.freeSpin.isFreeSpin && !IsFreeSpin;
     // Pinball bonus is authoritative from the backend flag (not from client scatter counting).
-    bool willTriggerPinball = SocketManager.ResultData.payload.features.pinball.triggered && !IsFreeSpin;
+    bool willTriggerPinball = SocketManager.ResultData.payload.features.pinball.triggered;
 
-    if ((willTriggerFreeSpin || willTriggerPinball) && IsAutoSpin && AutoSpinRoutine != null)
+    if (willTriggerPinball && IsAutoSpin && AutoSpinRoutine != null)
     {
       StopCoroutine(AutoSpinRoutine);
       AutoSpinRoutine = null;
@@ -659,12 +511,6 @@ public class SlotBehaviour : MonoBehaviour
 
     for (int i = 0; i < numberOfSlots; i++)
     {
-      if (IsFreeSpin && i == 1)
-      {
-        if (audioController) audioController.StopSpecialReelSpin();
-        StopReelSpin(SpecialReelTransform, SpecialReelIndex, SpecialReelTopY, SpecialReelRestY, specialReelSpeed);
-      }
-
       // On a pinball-trigger spin the last reel holds back and spins longer to build tension
       // (PDG keeps the "last reel spins longer" beat from the old game, but drops the zoom/glow).
       if (willTriggerPinball && i == numberOfSlots - 1)
@@ -676,10 +522,6 @@ public class SlotBehaviour : MonoBehaviour
     StopSpinToggle = false;
     // Base columns share a speed and start landing in order, so the last one finishes last.
     yield return reelTweens[numberOfSlots - 1].WaitForCompletion();
-    // The special column runs at its own slower speed, so it is still in flight here. It has to
-    // finish before KillAllTweens, or it freezes short of its rest position.
-    if (IsFreeSpin && reelTweens[SpecialReelIndex] != null && reelTweens[SpecialReelIndex].IsActive())
-      yield return reelTweens[SpecialReelIndex].WaitForCompletion();
 
     if (Spin_Button)
     {
@@ -701,7 +543,7 @@ public class SlotBehaviour : MonoBehaviour
       }
     }
 
-    if (!IsFreeSpin && SocketManager.ResultData.payload.totalWin > 0)
+    if (SocketManager.ResultData.payload.totalWin > 0)
     {
       SpinDelay = 3f;
     }
@@ -718,7 +560,7 @@ public class SlotBehaviour : MonoBehaviour
         winLine.Add(item.lineIndex);
       }
       lastWinLineCount = winLine.Count;
-      CheckPayoutLineBackend(winLine, SocketManager.ResultData.features.jackpot.amount);
+      CheckPayoutLineBackend(winLine);
     }
     else
     {
@@ -729,33 +571,14 @@ public class SlotBehaviour : MonoBehaviour
 
     if (TotalWin_text)
     {
-      double displayWin = IsFreeSpin ? SocketManager.ResultData.payload.totalFreeSpinWin : SocketManager.ResultData.payload.totalWin;
-      TotalWin_text.text = displayWin.ToString("F3");
+      TotalWin_text.text = SocketManager.ResultData.payload.totalWin.ToString("F3");
     }
     BalanceTween?.Kill();
     if (BalanceAmount) BalanceAmount.text = SocketManager.ResultData.player.balance.ToString("F3");
 
     currentBalance = SocketManager.PlayerData.balance;
 
-    if (IsFreeSpin)
-    {
-      uiManager.PlaySpinWin(SocketManager.ResultData.payload.winAmount);
-      yield return new WaitUntil(() => !uiManager.IsWinSequenceActive);
-    }
-    else
-    {
-      if (CheckAnyPureWildLine())
-        uiManager.PlayBigWinSequence(SocketManager.ResultData.payload.totalWin);
-      else
-        uiManager.PlaySpinWin(SocketManager.ResultData.payload.totalWin);
-    }
-
-    if (SocketManager.ResultData.features.jackpot.isTriggered)
-    {
-      CheckPopups = false;
-      yield return new WaitUntil(() => !CheckPopups);
-      CheckPopups = true;
-    }
+    uiManager.PlaySpinWin(SocketManager.ResultData.payload.totalWin);
 
     CheckWinPopups();
 
@@ -765,7 +588,7 @@ public class SlotBehaviour : MonoBehaviour
       // Leave IsSpinning true and buttons disabled — the bonus manager owns game state from here
       // and restores the base game via OnBonusComplete() when the feature ends.
     }
-    else if (!IsAutoSpin && !IsFreeSpin && !willTriggerFreeSpin)
+    else if (!IsAutoSpin)
     {
       ToggleButtonGrp(true);
       IsSpinning = false;
@@ -792,22 +615,8 @@ public class SlotBehaviour : MonoBehaviour
         Debug.LogWarning("[PinballBonus] pinballBonusManager reference not assigned — cannot start the bonus.");
     }
 
-    if (willTriggerFreeSpin)
-    {
-      if (audioController) audioController.PlayScatterFreeSpin();
-
-      yield return StartCoroutine(uiManager.PlayFreeSpinTriggerSequence(SocketManager.ResultData.features.freeSpin.count));
-      if (MiddleReelGlow) MiddleReelGlow.SetActive(true);
-      yield return StartCoroutine(PlaySpecialWildReel());
-      FreeSpin(SocketManager.ResultData.features.freeSpin.count);
-      if (IsAutoSpin)
-      {
-        WasAutoSpinOn = true;
-        StopAutoSpin();
-        yield return new WaitForSeconds(0.1f);
-      }
-    }
   }
+
   private void BalanceDeduction()
   {
     double bet = 0;
@@ -839,26 +648,6 @@ public class SlotBehaviour : MonoBehaviour
     });
   }
 
-  private bool CheckAnyPureWildLine()
-  {
-    if (SocketManager.ResultData.payload.wins == null) return false;
-    var lines = SocketManager.InitialData.lines;
-    foreach (var win in SocketManager.ResultData.payload.wins)
-    {
-      int lineIndex = win.line;
-      if (lineIndex < 0 || lineIndex >= lines.Count) continue;
-      var rows = lines[lineIndex];
-      bool pureWild = true;
-      for (int col = 0; col < rows.Count; col++)
-      {
-        int symbolId = _displayMatrix[PaddedRow(rows[col]), col];
-        if (symbolId < 6 || symbolId > 9) { pureWild = false; break; }
-      }
-      if (pureWild) return true;
-    }
-    return false;
-  }
-
   internal void CheckWinPopups()
   {
     CheckPopups = false;
@@ -869,8 +658,8 @@ public class SlotBehaviour : MonoBehaviour
   // 5-row display puts the active rows at 1..3 (rows 0/4 are decorative). So a payline row maps to
   // _displayMatrix / slotImages row +1. Confirmed against live winningLines: lines[0]=[1,1,1] (active
   // row 1) lands at display row 2. Used by the pinball-trigger scan/flash and the base-game win
-  // highlight (CheckPayoutLineBackend, CheckAnyPureWildLine). NOTE: winningLines[].positions are already
-  // in display (0..4) space — do NOT PaddedRow those; only the lines[] values need the offset.
+  // highlight (CheckPayoutLineBackend). NOTE: winningLines[].positions are already in display (0..4)
+  // space — do NOT PaddedRow those; only the lines[] values need the offset.
   private int PaddedRow(int backendLineRow) => backendLineRow + 1;
 
   // Returns every active payline whose three positions all hold the Pinball symbol (id 11).
@@ -956,12 +745,8 @@ public class SlotBehaviour : MonoBehaviour
   }
   #endregion
 
-  // Column 1 is visually replaced by the special wilds reel during free spins, so its symbol animations
-  // must target the special reel's own images rather than the hidden middle reel's.
   private GameObject GetSlotImageGameObject(int row, int column)
   {
-    if (IsFreeSpin && column == 1 && SpecialReelSlotImages != null && row < SpecialReelSlotImages.slotImages.Count)
-      return SpecialReelSlotImages.slotImages[row].gameObject;
     return TempImages[column].slotImages[row].gameObject;
   }
 
@@ -1074,7 +859,7 @@ public class SlotBehaviour : MonoBehaviour
         Spin_Button.spriteState = ss;
       }
     }
-    if (AutoSpin_Button) AutoSpin_Button.interactable = !IsFreeSpin && (toggle || IsAutoSpin);
+    if (AutoSpin_Button) AutoSpin_Button.interactable = toggle || IsAutoSpin;
     if (MaxBet_Button) MaxBet_Button.interactable = active;
     if (TBetMinus_Button) TBetMinus_Button.interactable = active;
     if (TBetPlus_Button) TBetPlus_Button.interactable = active;
@@ -1161,17 +946,6 @@ public class SlotBehaviour : MonoBehaviour
     else
       yield return new WaitForSeconds(0.2f);
   }
-
-  private IEnumerator PlaySpecialWildReel()
-  {
-    if (!SpecialReelObject || !SpecialReelTransform) yield break;
-    SpecialReelObject.SetActive(true);
-    if (MiddleReelObject) MiddleReelObject.SetActive(false);
-    SpecialReelTransform.localPosition = new Vector2(SpecialReelTransform.localPosition.x, SpecialReelRestY);
-    yield return null;
-  }
-
-
 
   private void KillAllTweens()
   {

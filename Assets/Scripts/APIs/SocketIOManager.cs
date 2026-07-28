@@ -470,13 +470,6 @@ public class GameData
 }
 
 [Serializable]
-public class FreeSpins
-{
-  public int count { get; set; }
-  public bool isFreeSpin { get; set; }
-}
-
-[Serializable]
 public class Root
 {
   public bool success { get; set; }
@@ -492,15 +485,10 @@ public class Root
 // Root.features. On a SL-PDG game:init this carries the top-level game config (baseCoinValue,
 // pinball prizes, doubleSymbol, anyPayouts, linePayout) — captured into SocketManager.GameFeatures.
 // Result payloads have no top-level "features" (the per-spin pinball flag lives at payload.features),
-// so on results this whole object stays default. freeSpin/jackpot are old SL-TXT-only fields kept +
-// default-initialized so the still-in-place free-spin/jackpot logic in SlotBehaviour.cs keeps
-// compiling and stays safely inert instead of null-reference-crashing.
+// so on results this whole object stays default.
 [Serializable]
 public class Features
 {
-  public FreeSpins freeSpin { get; set; } = new FreeSpins();
-  public Jackpot jackpot { get; set; } = new Jackpot();
-
   // SL-PDG init config (populated only from the game:init "features" block; null on results).
   public double baseCoinValue { get; set; }
   public PinballConfig pinball { get; set; }
@@ -542,13 +530,6 @@ public class LinePayout
 }
 
 [Serializable]
-public class Jackpot
-{
-  public bool isTriggered { get; set; }
-  public double amount { get; set; }
-}
-
-[Serializable]
 public class Payload
 {
   // SL-PDG live result payload fields (SPIN):
@@ -566,15 +547,6 @@ public class Payload
   public bool isSpecial { get; set; }          // hit a +shot special UFO
   public bool isChute { get; set; }            // this shot went down the chute (marble) instead of a UFO
   public BonusState bonusState { get; set; } = new BonusState();
-
-  // Old SL-TXT-only fields, kept + default-initialized for the same reason as Features above:
-  // the still-in-place free-spin/wild logic in SlotBehaviour.cs reads these and must not crash.
-  public double winAmount { get; set; }
-  public List<Win> wins { get; set; }
-  public int freeSpinsRemaining { get; set; }
-  public bool isFreeSpinActive { get; set; }
-  public int freeSpinsAwarded { get; set; }
-  public double totalFreeSpinWin { get; set; }
 }
 
 [Serializable]
@@ -607,16 +579,6 @@ public class PinballTriggerInfo
 {
   public bool triggered { get; set; }
   public int shotsRemaining { get; set; }      // starting shot count, present on the triggering spin
-}
-
-[Serializable]
-public class Win
-{
-  public int line { get; set; }
-  public List<List<int>> positions { get; set; }
-  public double amount { get; set; }
-  public string symbolId { get; set; }
-  public int multiplier { get; set; }
 }
 
 [Serializable]

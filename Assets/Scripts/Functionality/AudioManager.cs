@@ -7,7 +7,6 @@ public class AudioManager : MonoBehaviour
 
     [Header("Audio Sources")]
     [SerializeField] private AudioSource bgMusicSource;
-    [SerializeField] private AudioSource specialReelSource;
     [SerializeField] private AudioSource spinSource;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioSource overlapSource;
@@ -27,11 +26,6 @@ public class AudioManager : MonoBehaviour
 
     [Header("Symbols")]
     [SerializeField] private AudioClip clipNormalIcon;
-
-    [Header("Features")]
-    // Both still referenced by the (dead) free-spin code — remove with the free-spin cleanup.
-    [SerializeField] private AudioClip clipScatterFreeSpin;
-    [SerializeField] private AudioClip clipSpecialReelSpin;
 
     [Header("Pinball Bonus")]
     [SerializeField] private AudioClip clipBonusBg;         // bonus-game background music (loop)
@@ -90,7 +84,6 @@ public class AudioManager : MonoBehaviour
         if (sfxSource) sfxSource.volume = v;
         if (overlapSource) overlapSource.volume = v;
         if (spinSource) spinSource.volume = v;
-        if (specialReelSource) specialReelSource.volume = v;
         if (ballTickSource) ballTickSource.volume = v;
     }
 
@@ -153,21 +146,6 @@ public class AudioManager : MonoBehaviour
     // ── Symbols ───────────────────────────────────────────────────────────────
 
     internal void PlayNormalIcon() => PlayOneShot(sfxSource, clipNormalIcon);
-
-    // ── Features ──────────────────────────────────────────────────────────────
-
-    internal void PlayScatterFreeSpin() => PlayOneShot(sfxSource, clipScatterFreeSpin);
-
-    internal void PlaySpecialReelSpin()
-    {
-        if (specialReelSource == null || clipSpecialReelSpin == null) return;
-        specialReelSource.clip = clipSpecialReelSpin;
-        specialReelSource.loop = true;
-        specialReelSource.volume = _sfxEnabled ? 1f : 0f;
-        specialReelSource.Play();
-    }
-
-    internal void StopSpecialReelSpin() => StopSource(specialReelSource);
 
     // ── Pinball Bonus ─────────────────────────────────────────────────────────
 

@@ -13751,7 +13751,7 @@ PrefabInstance:
       objectReference: {fileID: 1728521618}
     - target: {fileID: 7610637853776029503, guid: fbbc9264dc50de44589243147c5ea3dc, type: 3}
       propertyPath: testToken
-      value: 8a2a30afbeea4d41b0214d7ef083b843
+      value: 161d48a9cd7a40a8bf33ec72f1484bd3
       objectReference: {fileID: 0}
     - target: {fileID: 7610637853776029503, guid: fbbc9264dc50de44589243147c5ea3dc, type: 3}
       propertyPath: uiManager
@@ -20945,7 +20945,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1298497625
 RectTransform:
   m_ObjectHideFlags: 0
@@ -23060,7 +23060,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1417823551
 RectTransform:
   m_ObjectHideFlags: 0
@@ -32754,22 +32754,10 @@ MonoBehaviour:
   pinballFlashDuration: 2
   pinballFlashHalfCycle: 0.3
   pinballFlashMinAlpha: 0.2
-  SpecialReelObject: {fileID: 0}
-  SpecialReelTransform: {fileID: 0}
-  MiddleReelObject: {fileID: 1480330874}
-  MiddleReelGlow: {fileID: 0}
-  LastReelGlow: {fileID: 0}
-  FreeSpinSlotMachine: {fileID: 0}
-  SpecialReelSlotImages:
-    slotImages: []
   reelSpeed: 8350
-  specialReelSpeed: 1670
   ReelTopY: 3700
   ReelBottomY: 900
   ReelRestY: 3393.2
-  SpecialReelTopY: 0
-  SpecialReelBottomY: 0
-  SpecialReelRestY: 3393.2
   landEase: 27
   landOvershoot: 0.9
   paylineHoldDuration: 1.5

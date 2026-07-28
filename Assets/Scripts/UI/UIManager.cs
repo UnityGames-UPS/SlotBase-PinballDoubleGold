@@ -39,25 +39,6 @@ public class UIManager : MonoBehaviour
   [Header("Game Content")]
   // The main game content root, scaled by win sequences (SkipWinSequences resets it). Not an intro.
   [SerializeField] private RectTransform GameContent;
-  private int _anticipationPunchStep = 0;
-  private readonly float[] _anticipationPunchScales = { 1.05f, 1.10f };
-  private const float _anticipationZoomTarget = 1.20f;
-
-  [Header("Free Spin Trigger Sequence")]
-  [SerializeField] private GameObject DarkenOverlay;
-  [SerializeField] private GameObject FreeSpinsTriggerText;
-  [SerializeField] private GameObject MainLogo;
-  [SerializeField] private GameObject FreeSpinsLogoDisplay;
-  [SerializeField] private TMP_Text FreeSpinsLogoCountText;
-  [SerializeField] private ImageAnimation FreeSpinsCountAnimation;
-  [SerializeField] private RectTransform FreeGraphic;
-  [SerializeField] private RectTransform SpinsGraphic;
-  [SerializeField] private float freeSpinsSplitDuration = 0.4f;
-  [SerializeField] private float freeSpinsCountDuration = 1.0f;
-  [SerializeField] private float freeSpinsFlyDuration = 0.6f;
-  [SerializeField] private float freeSpinsSplitDistance = 250f;
-  [SerializeField] private float freeSpinsCountHoldDuration = 0.5f;
-  [SerializeField] private float freeSpinsCountFadeDuration = 0.3f;
 
   [Header("Big Win Sequence")]
   [SerializeField] private GameObject BigWinSequencePanel;
@@ -239,7 +220,7 @@ public class UIManager : MonoBehaviour
 
   private void Start()
   {
-    StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
+    // StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
 
     if (Menu_Button) Menu_Button.onClick.RemoveAllListeners();
     if (Menu_Button) Menu_Button.onClick.AddListener(OpenMenu);
@@ -344,8 +325,6 @@ public class UIManager : MonoBehaviour
 
     if (Music_Button) Music_Button.onClick.RemoveAllListeners();
     if (Music_Button) Music_Button.onClick.AddListener(ToggleMusic);
-
-    if (FreeSpinsLogoDisplay) FreeSpinsLogoDisplay.SetActive(false);
   }
 
 
@@ -477,110 +456,6 @@ public class UIManager : MonoBehaviour
     if (BalanceAmount) BalanceAmount.text = balance.ToString("F3");
     if (TotalBet_text) TotalBet_text.text = bet.ToString();
     if (TotalWin_text) TotalWin_text.text = "0.000";
-  }
-
-  internal void ScatterAnticipationPunch()
-  {
-    if (!GameContent || _anticipationPunchStep >= _anticipationPunchScales.Length) return;
-    float target = _anticipationPunchScales[_anticipationPunchStep++];
-    GameContent.DOKill();
-    GameContent.DOScale(Vector3.one * target, 0.15f).SetEase(Ease.OutBack);
-  }
-
-  internal void StartAnticipationZoom(float duration)
-  {
-    if (!GameContent) return;
-    GameContent.DOKill();
-    GameContent.DOScale(Vector3.one * _anticipationZoomTarget, duration).SetEase(Ease.Linear);
-  }
-
-  internal void ResetAnticipationZoom()
-  {
-    _anticipationPunchStep = 0;
-    if (!GameContent) return;
-    GameContent.DOKill();
-    GameContent.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutQuad);
-  }
-
-  internal IEnumerator PlayFreeSpinTriggerSequence(int spinCount)
-  {
-    ResetAnticipationZoom();
-    if (DarkenOverlay) DarkenOverlay.SetActive(true);
-
-    // Store starting positions
-    Vector2 freeStart = FreeGraphic ? FreeGraphic.anchoredPosition : Vector2.zero;
-    Vector2 spinsStart = SpinsGraphic ? SpinsGraphic.anchoredPosition : Vector2.zero;
-    Vector3 countAnimStart = FreeSpinsCountAnimation ? FreeSpinsCountAnimation.transform.position : Vector3.zero;
-
-    // Show FREE and SPINS graphics then split apart
-    if (FreeGraphic) FreeGraphic.gameObject.SetActive(true);
-    if (SpinsGraphic) SpinsGraphic.gameObject.SetActive(true);
-
-    Tween freeSplit = null;
-    if (FreeGraphic) freeSplit = FreeGraphic.DOAnchorPosX(freeStart.x - freeSpinsSplitDistance, freeSpinsSplitDuration).SetEase(Ease.OutBack);
-    if (SpinsGraphic) SpinsGraphic.DOAnchorPosX(spinsStart.x + freeSpinsSplitDistance, freeSpinsSplitDuration).SetEase(Ease.OutBack);
-    if (freeSplit != null) yield return freeSplit.WaitForCompletion();
-    else yield return new WaitForSeconds(freeSpinsSplitDuration);
-
-    // Play count animation in the middle
-    if (FreeSpinsCountAnimation)
-    {
-      FreeSpinsCountAnimation.gameObject.SetActive(true);
-      FreeSpinsCountAnimation.StartAnimation();
-      yield return new WaitForSeconds(freeSpinsCountDuration);
-    }
-
-    // Fly number up to logo; simultaneously bring FREE and SPINS back together
-    Image countImage = FreeSpinsCountAnimation ? FreeSpinsCountAnimation.GetComponent<Image>() : null;
-    if (FreeSpinsCountAnimation && FreeSpinsLogoDisplay)
-    {
-      FreeSpinsCountAnimation.transform.DOMove(FreeSpinsLogoDisplay.transform.position, freeSpinsFlyDuration).SetEase(Ease.InCubic);
-    }
-    if (FreeGraphic) FreeGraphic.DOAnchorPosX(freeStart.x, freeSpinsFlyDuration).SetEase(Ease.InBack);
-    if (SpinsGraphic) SpinsGraphic.DOAnchorPosX(spinsStart.x, freeSpinsFlyDuration).SetEase(Ease.InBack);
-    yield return new WaitForSeconds(freeSpinsFlyDuration);
-
-    // Hold at the logo, then fade out
-    yield return new WaitForSeconds(freeSpinsCountHoldDuration);
-    if (countImage) yield return countImage.DOFade(0f, freeSpinsCountFadeDuration).WaitForCompletion();
-
-    // Clean up
-    if (FreeSpinsCountAnimation)
-    {
-      FreeSpinsCountAnimation.StopAnimation();
-      FreeSpinsCountAnimation.gameObject.SetActive(false);
-      FreeSpinsCountAnimation.transform.position = countAnimStart;
-      if (countImage) { Color c = countImage.color; c.a = 1f; countImage.color = c; }
-    }
-    if (FreeGraphic) FreeGraphic.gameObject.SetActive(false);
-    if (SpinsGraphic) SpinsGraphic.gameObject.SetActive(false);
-
-    if (MainLogo) MainLogo.SetActive(false);
-    if (FreeSpinsLogoCountText) FreeSpinsLogoCountText.text = spinCount.ToString();
-    if (FreeSpinsLogoDisplay) FreeSpinsLogoDisplay.SetActive(true);
-    if (DarkenOverlay) DarkenOverlay.SetActive(false);
-  }
-
-  internal void EndFreeSpinTriggerSequence()
-  {
-    if (MainLogo) MainLogo.SetActive(true);
-    if (FreeSpinsLogoDisplay) FreeSpinsLogoDisplay.SetActive(false);
-  }
-
-  internal void UpdateFreeSpinsRemaining(int remaining)
-  {
-    if (!FreeSpinsLogoCountText) return;
-    FreeSpinsLogoCountText.transform.DOKill();
-    FreeSpinsLogoCountText.transform
-      .DOScaleY(0f, 0.1f)
-      .SetEase(Ease.InBack)
-      .OnComplete(() =>
-      {
-        FreeSpinsLogoCountText.text = remaining.ToString();
-        FreeSpinsLogoCountText.transform
-          .DOScaleY(1f, 0.15f)
-          .SetEase(Ease.OutBack);
-      });
   }
 
   internal void PlaySpinWin(double winAmount)
