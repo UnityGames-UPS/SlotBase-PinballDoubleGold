@@ -11,6 +11,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource spinSource;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioSource overlapSource;
+    [SerializeField] private AudioSource ballTickSource;   // looping source for the pinball ball-travel tick
 
     [Header("BG Music")]
     [SerializeField] private AudioClip clipBg;
@@ -28,14 +29,18 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip clipNormalIcon;
 
     [Header("Features")]
-    [SerializeField] private AudioClip clipFreeGameStarted;
-    [SerializeField] private AudioClip clipFreeGameBonus;
-    [SerializeField] private AudioClip clipBigBonus;
-    [SerializeField] private AudioClip clipSuperBonusWinner;
-    [SerializeField] private AudioClip clipAllScatter;
+    // Both still referenced by the (dead) free-spin code — remove with the free-spin cleanup.
     [SerializeField] private AudioClip clipScatterFreeSpin;
     [SerializeField] private AudioClip clipSpecialReelSpin;
-    [SerializeField] private AudioClip clipNumberFly;
+
+    [Header("Pinball Bonus")]
+    [SerializeField] private AudioClip clipBonusBg;         // bonus-game background music (loop)
+    [SerializeField] private AudioClip clipBonusScatter;    // 3 Pinball trigger symbols land/flash
+    [SerializeField] private AudioClip clipBonusAnimation;  // bonus intro flourish
+    [SerializeField] private AudioClip clipBallTick;        // ball travelling the ring (loop)
+    [SerializeField] private AudioClip clipBallStop;        // ball lands/stops on a prize
+    [SerializeField] private AudioClip clipBonusComplete;   // bonus-complete sting
+    [SerializeField] private AudioClip clipBigWin;          // big-win celebration (base big win + pinball bonus win)
 
     private bool _musicEnabled = true;
     private bool _sfxEnabled = true;
@@ -86,6 +91,7 @@ public class AudioManager : MonoBehaviour
         if (overlapSource) overlapSource.volume = v;
         if (spinSource) spinSource.volume = v;
         if (specialReelSource) specialReelSource.volume = v;
+        if (ballTickSource) ballTickSource.volume = v;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -150,13 +156,7 @@ public class AudioManager : MonoBehaviour
 
     // ── Features ──────────────────────────────────────────────────────────────
 
-    internal void PlayFreeGameStarted() => PlayOneShot(sfxSource, clipFreeGameStarted);
-    internal void PlayFreeGameBonus() => PlayOneShot(sfxSource, clipFreeGameBonus);
-    internal void PlayBigBonus() => PlayOneShot(sfxSource, clipBigBonus);
-    internal void PlaySuperBonusWinner() => PlayOneShot(sfxSource, clipSuperBonusWinner);
-    internal void PlayAllScatter() => PlayOneShot(sfxSource, clipAllScatter);
     internal void PlayScatterFreeSpin() => PlayOneShot(sfxSource, clipScatterFreeSpin);
-    internal void PlayNumberFly() => PlayOneShot(sfxSource, clipNumberFly);
 
     internal void PlaySpecialReelSpin()
     {
@@ -168,6 +168,36 @@ public class AudioManager : MonoBehaviour
     }
 
     internal void StopSpecialReelSpin() => StopSource(specialReelSource);
+
+    // ── Pinball Bonus ─────────────────────────────────────────────────────────
+
+    internal void PlayBonusBgMusic()
+    {
+        if (bgMusicSource == null || clipBonusBg == null) return;
+        if (bgMusicSource.isPlaying && bgMusicSource.clip == clipBonusBg) return;
+        bgMusicSource.clip = clipBonusBg;
+        bgMusicSource.loop = true;
+        bgMusicSource.volume = _musicEnabled ? 1f : 0f;
+        bgMusicSource.Play();
+    }
+
+    internal void PlayBonusScatter() => PlayOneShot(sfxSource, clipBonusScatter);
+    internal void PlayBonusAnimation() => PlayOneShot(sfxSource, clipBonusAnimation);
+    internal void PlayBallStop() => PlayOneShot(overlapSource, clipBallStop);
+    internal void PlayBonusComplete() => PlayOneShot(sfxSource, clipBonusComplete);
+    internal void PlayBigWin() => PlayOneShot(sfxSource, clipBigWin);
+
+    internal void PlayBallTick()
+    {
+        if (ballTickSource == null || clipBallTick == null) return;
+        if (ballTickSource.isPlaying && ballTickSource.clip == clipBallTick) return;
+        ballTickSource.clip = clipBallTick;
+        ballTickSource.loop = true;
+        ballTickSource.volume = _sfxEnabled ? 1f : 0f;
+        ballTickSource.Play();
+    }
+
+    internal void StopBallTick() => StopSource(ballTickSource);
 
     // ── Focus Handling ────────────────────────────────────────────────────────
 

@@ -21,6 +21,7 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private SocketIOManager socketManager;
   [SerializeField] private SlotBehaviour slotBehaviour;
   [SerializeField] private UIManager uiManager;   // owns the bonus-win celebration (panel + count-up + fountain)
+  [SerializeField] private AudioManager audioManager;   // bonus music + shot/complete SFX
 
   [Header("Transition (scroll base machine out, bonus UI in)")]
   // Sibling movers: gameContentRoot (the base machine, GameContent) scrolls down/out while
@@ -49,6 +50,13 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private float startPromptFadeDuration = 0.4f;
   [SerializeField] private float startButtonPulseScale = 1.1f;      // peak scale of the pulsing start button
   [SerializeField] private float startButtonPulseDuration = 0.7f;   // half-cycle time (slow ease in/out)
+  // The same group is reused at bonus end; these two content parents toggle which text it shows. At the
+  // start bonusTriggeredText is active ("...PRESS BUTTON TO START"); at the end bonusWinTotal is active
+  // (its "TOTAL WIN" / amount / "BONUS COMPLETE" texts). Only one is active at a time.
+  [SerializeField] private GameObject bonusTriggeredText;
+  [SerializeField] private GameObject bonusWinTotal;
+  [SerializeField] private TMP_Text bonusWinTotalAmount;   // the dynamic win amount inside bonusWinTotal
+  [SerializeField] private float bonusWinOverlayHold = 2f;  // end overlay auto-dismisses after this many seconds (no button)
 
   [Header("Bonus Intro (UFO chase + ball entry)")]
   // After Start: all UFOs run a rotating chase-light flourish (shared lit/dim sprite swap), then the ball
@@ -143,6 +151,7 @@ public class PinballBonusManager : MonoBehaviour
 
   private IEnumerator BeginBonusRoutine()
   {
+    if (audioManager) audioManager.PlayBonusBgMusic();
     UpdateShotsAmount(_shotsRemaining);
     UpdateBonusWinAmount(0);
     if (totalBetAmount) totalBetAmount.text = _totalBet.ToString("F2");
@@ -153,7 +162,7 @@ public class PinballBonusManager : MonoBehaviour
 
     yield return StartCoroutine(TransitionToBonus());
 
-    yield return StartCoroutine(ShowStartPromptAndWait());
+    yield return StartCoroutine(ShowBonusOverlayAndWait(bonusTriggeredText, bonusWinTotal));
 
     yield return StartCoroutine(PlayBonusIntro());
 
@@ -164,6 +173,7 @@ public class PinballBonusManager : MonoBehaviour
   // around the outer ring to the first circle (the shoot point), ready for the first shot.
   private IEnumerator PlayBonusIntro()
   {
+    if (audioManager) audioManager.PlayBonusAnimation();
     yield return StartCoroutine(UfoChaseRoutine());
     yield return StartCoroutine(LightOuterPathReverseWithTrail());
   }
@@ -202,28 +212,40 @@ public class PinballBonusManager : MonoBehaviour
       if (u && u.image) u.image.sprite = sp;
   }
 
-  // Post-scroll gate: fade in the dark overlay + "BONUS TRIGGERED / PRESS BUTTON TO START" prompt and
-  // its start button together (one CanvasGroup), wait for the press, then fade them back out before the
-  // player's shots begin. No-op if the prompt isn't wired, so the bonus still runs without it.
-  private IEnumerator ShowStartPromptAndWait()
+  // Shows the reused BonusStartGroup overlay with one of its content parents active — the start prompt at
+  // the beginning, the win-total block at the end — and fades it in (dark overlay + frame + button in one
+  // CanvasGroup). If autoDismissHold > 0 (the end) it just holds that long then dismisses; otherwise (the
+  // start) it pulses the button and waits for the press. No-op if the group isn't wired.
+  private IEnumerator ShowBonusOverlayAndWait(GameObject activeContent, GameObject inactiveContent, float autoDismissHold = 0f)
   {
     if (bonusStartGroup == null) yield break;
+
+    if (activeContent) activeContent.SetActive(true);
+    if (inactiveContent) inactiveContent.SetActive(false);
 
     _startPressed = false;
     bonusStartGroup.gameObject.SetActive(true);
     bonusStartGroup.alpha = 0f;
     bonusStartGroup.interactable = true;
-    bonusStartGroup.blocksRaycasts = true;   // overlay soaks up clicks so only the start button responds
-    StartStartButtonPulse();
+    bonusStartGroup.blocksRaycasts = true;   // overlay soaks up clicks
     yield return bonusStartGroup.DOFade(1f, startPromptFadeDuration).WaitForCompletion();
 
-    if (bonusStartButton)
+    if (autoDismissHold > 0f)
+    {
+      yield return new WaitForSeconds(autoDismissHold);
+    }
+    else if (bonusStartButton)
+    {
+      StartStartButtonPulse();
       yield return new WaitUntil(() => _startPressed);
+      StopStartButtonPulse();
+    }
     else
-      Debug.LogWarning("[PinballBonus] bonusStartButton not assigned — start prompt can't be dismissed by a press; continuing.");
+    {
+      Debug.LogWarning("[PinballBonus] bonusStartButton not assigned — start overlay can't be dismissed by a press; continuing.");
+    }
 
-    StopStartButtonPulse();
-    bonusStartGroup.gameObject.SetActive(false);   // instant off on press, no fade-out
+    bonusStartGroup.gameObject.SetActive(false);   // instant off, no fade-out
   }
 
   private void OnStartPressed() => _startPressed = true;
@@ -253,6 +275,14 @@ public class PinballBonusManager : MonoBehaviour
   {
     SetShootInteractable(false);
     yield return new WaitForSeconds(endHoldDuration);
+
+    // Reuse the start overlay for the win summary: swap to the win-total block, fill the dynamic amount,
+    // and hold — shown over the bonus board before we scroll back.
+    if (audioManager) audioManager.PlayBonusComplete();
+    if (bonusWinTotalAmount) bonusWinTotalAmount.text = _totalBonusWin.ToString("F2");
+    yield return StartCoroutine(ShowBonusOverlayAndWait(bonusWinTotal, bonusTriggeredText, bonusWinOverlayHold));
+
+    if (audioManager) audioManager.PlayBgMusic();   // restore the main-game music as we head back
     yield return StartCoroutine(TransitionFromBonus());
     // Scrolled back to the main game — hand the total to UIManager, which owns the win celebration
     // (panel + count-up + coin fountain). Fire-and-forget: it sets IsBonusWinActive, and StartSlots
@@ -306,6 +336,9 @@ public class PinballBonusManager : MonoBehaviour
   // Plays the ball's journey for one shot: the outer loop, then to the backend-chosen destination.
   private IEnumerator AnimateShot(bool isChute, bool isSpecial, int selectedIndex)
   {
+    // Ticking loops for the whole journey; it's stopped (and a landing sound played) when the ball arrives.
+    if (audioManager) audioManager.PlayBallTick();
+
     // 1. Outer loop, always the same, straight through — lit as a shrinking comet trail.
     yield return LightOuterPathWithTrail();
 
@@ -314,6 +347,7 @@ public class PinballBonusManager : MonoBehaviour
     {
       yield return LightSequence(PickRoute(marbleApproachRoutes)?.circles);
       ClearLight();
+      if (audioManager) { audioManager.StopBallTick(); audioManager.PlayBallStop(); }
       yield return CollectMarble(selectedIndex);
       yield break;
     }
@@ -325,11 +359,13 @@ public class PinballBonusManager : MonoBehaviour
       BallRoute route = PickRoute(ufo.routes);
       if (route != null) yield return LightSequence(route.circles);
       ClearLight();
+      if (audioManager) { audioManager.StopBallTick(); audioManager.PlayBallStop(); }
       yield return FlashPrize(ufo.group);
       ClearLight();
       yield break;
     }
 
+    if (audioManager) audioManager.StopBallTick();
     ClearLight();
     Debug.LogWarning($"[PinballBonus] No UFO wired for isSpecial={isSpecial}, selectedIndex={selectedIndex}.");
   }

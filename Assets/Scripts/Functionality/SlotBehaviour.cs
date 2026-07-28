@@ -782,6 +782,7 @@ public class SlotBehaviour : MonoBehaviour
       uiManager.SkipWinSequences();
       // Flash the winning pinball line(s), then hand off to the bonus manager, which runs the
       // base->bonus transition and the per-press shot loop.
+      if (audioController) audioController.PlayBonusScatter();
       List<int> pinballLines = FindPinballLines();
       yield return StartCoroutine(FlashPinballTrigger(pinballLines));
       int startShots = SocketManager.ResultData.payload.features.pinball.shotsRemaining;
@@ -1154,6 +1155,7 @@ public class SlotBehaviour : MonoBehaviour
   private IEnumerator StopBaseReel(int index)
   {
     StopReelSpin(Slot_Transform[index], index, ReelTopY, ReelRestY, reelSpeed);
+    if (audioController) audioController.PlayReelStop();
     if (StopSpinToggle)
       yield return null;
     else

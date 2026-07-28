@@ -737,7 +737,7 @@ public class UIManager : MonoBehaviour
     if (BonusWinPanel) { ImageAnimation panelAnim = BonusWinPanel.GetComponent<ImageAnimation>(); if (panelAnim) panelAnim.StartAnimation(); }
     if (coinFountainPool) coinFountainPool.StartFountain();   // pooled coins spray up from the panel (was the fullscreen ImageAnimation)
 
-    if (audioManager) audioManager.PlaySuperBonusWinner();
+    if (audioManager) audioManager.PlayBigWin();
 
     float bonusWinDisplay = 0f;
     if (BonusWinAmountText)
@@ -803,7 +803,7 @@ public class UIManager : MonoBehaviour
       panelAnim = BigWinPanel.GetComponent<ImageAnimation>();
       if (panelAnim) panelAnim.StartAnimation();
     }
-    if (audioManager) audioManager.PlaySuperBonusWinner();
+    if (audioManager) audioManager.PlayBigWin();
 
     if (_bigWinAmountCoroutine != null) StopCoroutine(_bigWinAmountCoroutine);
     _bigWinAmountCoroutine = StartCoroutine(BigWinAmountRoutine(panelAnim, totalWin));

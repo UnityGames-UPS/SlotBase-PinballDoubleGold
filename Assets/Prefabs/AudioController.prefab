@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4482117061173973204}
   - component: {fileID: 4984764283767553191}
   - component: {fileID: 322530269464167289}
+  - component: {fileID: 5873664009178184894}
   m_Layer: 0
   m_Name: AudioController
   m_TagString: Untagged
@@ -145,8 +146,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: 1452fbcdc7a11bf408aa7e40ed9a1e28, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 1
@@ -244,30 +245,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
   bgMusicSource: {fileID: 7671732010189892726}
-  bonusBgSource: {fileID: 8507266886385244306}
+  specialReelSource: {fileID: 8507266886385244306}
   spinSource: {fileID: 4482117061173973204}
   sfxSource: {fileID: 4984764283767553191}
   overlapSource: {fileID: 322530269464167289}
-  clipBg: {fileID: 8300000, guid: 5f26591990952b741a0d4d87d38e2ce6, type: 3}
-  clipBonusBg: {fileID: 8300000, guid: 57a992d4448db4c40945164e0fced8c8, type: 3}
-  clipButton: {fileID: 8300000, guid: eeefbe746b34dcc479de3f5414a050c9, type: 3}
-  clipGameStarted: {fileID: 8300000, guid: e0e20a3a74215714988deffd1b31b858, type: 3}
-  clipSpinLoop: {fileID: 8300000, guid: 992b451693c643c48850c9aa63c51656, type: 3}
-  clipReelStop: {fileID: 8300000, guid: 2fe97ad8f1fb3d941abb0457014f4c12, type: 3}
-  clipNormalIcon: {fileID: 8300000, guid: da0f1e3dc2f56064ca35e7ca950dd750, type: 3}
-  clipJackpotIcon: {fileID: 8300000, guid: f699d78831a5a094c87fa85c2ef20205, type: 3}
-  clipBubblePop: {fileID: 8300000, guid: 9e69fff20136190408106a0405deb6fa, type: 3}
-  clipCoinValueAppear: {fileID: 8300000, guid: c7f396d7a184eac49883eac52bee6c00, type: 3}
-  clipBatHit: {fileID: 8300000, guid: b424005d206f1174eb7c43bf21a62928, type: 3}
-  clipFreeGameStarted: {fileID: 8300000, guid: aeb30e8801cbfc340bafa154508130ca, type: 3}
-  clipFreeGameBonus: {fileID: 8300000, guid: 4be31b627f7aad348927dc7a96345ac1, type: 3}
-  clipBigBonus: {fileID: 8300000, guid: 57a992d4448db4c40945164e0fced8c8, type: 3}
-  clipInsideJackpot: {fileID: 8300000, guid: cb6abd9e45de9004e9e55bd81bf1582b, type: 3}
-  clipChoosedJackpot: {fileID: 8300000, guid: dec0930086b62f3478f54933c6a38f05, type: 3}
-  clipTimerClock: {fileID: 8300000, guid: 93320d23f065e394f9b9566215a32e7d, type: 3}
-  clipMiniJackpot: {fileID: 8300000, guid: 7bb1c2096f70e374eb4e8ce46a43ada2, type: 3}
-  clipMinorJackpot: {fileID: 8300000, guid: 9eee0a9fa35fa8c4bad287fb61212b77, type: 3}
-  clipBigWin: {fileID: 8300000, guid: e41846516b0091c4b855344252ca7cb2, type: 3}
+  ballTickSource: {fileID: 5873664009178184894}
+  clipBg: {fileID: 8300000, guid: 68a59e2127266ee438d5642a667f34bf, type: 3}
+  clipButton: {fileID: 8300000, guid: 799bb7465313c974b9734ac01cab3444, type: 3}
+  clipUIClick: {fileID: 8300000, guid: 2be2fa1f0f966074098ee77684dde079, type: 3}
+  clipGameStarted: {fileID: 8300000, guid: b0c505675996c4749a454f21d7f00722, type: 3}
+  clipSpinLoop: {fileID: 8300000, guid: fa99fb83b781c844a8fb801780851ed5, type: 3}
+  clipReelStop: {fileID: 8300000, guid: ad448bbdcae00254fa64b7191671a9ca, type: 3}
+  clipNormalIcon: {fileID: 8300000, guid: fd89b29e86d10524caa3db0035c2e07b, type: 3}
+  clipFreeGameStarted: {fileID: 8300000, guid: 4a444a0a04c26574e8b88b47a7195402, type: 3}
+  clipFreeGameBonus: {fileID: 8300000, guid: 145112376c7a5b04a9213d4066e42dab, type: 3}
+  clipBigBonus: {fileID: 8300000, guid: 1eef635ce6c5fbe40aeb8bc9f56e8b27, type: 3}
+  clipSuperBonusWinner: {fileID: 8300000, guid: 1eef635ce6c5fbe40aeb8bc9f56e8b27, type: 3}
+  clipAllScatter: {fileID: 8300000, guid: 71cb4ad6454cede4ea66516429cf60bb, type: 3}
+  clipScatterFreeSpin: {fileID: 8300000, guid: 1c11655934d23d34faf1cec05dda7703, type: 3}
+  clipSpecialReelSpin: {fileID: 8300000, guid: b0bf720ae4929774f93c0bd528e02673, type: 3}
+  clipNumberFly: {fileID: 0}
+  clipBonusBg: {fileID: 8300000, guid: 848746de22862cb40b3beb11caff8b00, type: 3}
+  clipBonusScatter: {fileID: 8300000, guid: c86264fde6806f249b07beb9bc85429d, type: 3}
+  clipBonusAnimation: {fileID: 8300000, guid: 7e98cf8b2fe6c41438f234342582864d, type: 3}
+  clipBallTick: {fileID: 8300000, guid: a7f17b37cbfaf204bb94f47566bc053f, type: 3}
+  clipBallStop: {fileID: 8300000, guid: dadcb9a73842c7244bb051559a408841, type: 3}
+  clipBonusComplete: {fileID: 8300000, guid: 36990d78dbe60ab4989962b585157502, type: 3}
 --- !u!82 &4482117061173973204
 AudioSource:
   m_ObjectHideFlags: 0
@@ -475,6 +478,103 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!82 &5873664009178184894
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882695972752793837}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
