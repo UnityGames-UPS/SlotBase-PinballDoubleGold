@@ -205,7 +205,7 @@ public class UIManager : MonoBehaviour
 
   private void Start()
   {
-    StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
+    //StartCoroutine(DebugBonusWinPreview());   // TEMP TEST: preview the bonus win sequence at startup
 
     if (Menu_Button) Menu_Button.onClick.RemoveAllListeners();
     if (Menu_Button) Menu_Button.onClick.AddListener(OpenMenu);
@@ -427,6 +427,13 @@ public class UIManager : MonoBehaviour
     SetButtonSprite(Sound_Button, isSound ? SoundOnSprite : SoundOffSprite);
     if (audioManager) audioManager.PlayUIClick();
     if (audioManager) audioManager.SetSfxEnabled(isSound);
+  }
+
+  // Bridge for the WebGL focus path: SocketIOManager holds no AudioManager reference,
+  // so it routes through here to reach the same SetMuteAll the native path calls.
+  internal void SetFocusMute(bool forceMute)
+  {
+    if (audioManager) audioManager.SetMuteAll(forceMute);
   }
 
   private void SetButtonSprite(Button button, Sprite sprite)

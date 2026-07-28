@@ -380,8 +380,14 @@ public class SlotBehaviour : MonoBehaviour
   }
   #endregion
 
-  private void OnApplicationFocus(bool focus)
+  // Backend-pushed balance correction (balance:sync). Snapped, not tweened — this is an
+  // external correction, not a spin result.
+  internal void UpdateBalanceDisplay(double newBalance)
   {
+    BalanceTween?.Kill();
+    currentBalance = newBalance;
+    if (BalanceAmount) BalanceAmount.text = newBalance.ToString("F3");
+    CompareBalance();
   }
 
   #region SlotSpin

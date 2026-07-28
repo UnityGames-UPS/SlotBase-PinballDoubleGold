@@ -59,6 +59,7 @@ public class AudioManager : MonoBehaviour
 
     internal void SetMusicEnabled(bool on)
     {
+        ClearForceMute();   // an explicit tap proves we have real focus — it must win immediately
         _musicEnabled = on;
         PlayerPrefs.SetInt(PrefKeyMusic, on ? 1 : 0);
         PlayerPrefs.Save();
@@ -67,6 +68,7 @@ public class AudioManager : MonoBehaviour
 
     internal void SetSfxEnabled(bool on)
     {
+        ClearForceMute();   // an explicit tap proves we have real focus — it must win immediately
         _sfxEnabled = on;
         PlayerPrefs.SetInt(PrefKeySFX, on ? 1 : 0);
         PlayerPrefs.Save();
@@ -179,18 +181,33 @@ public class AudioManager : MonoBehaviour
 
     // ── Focus Handling ────────────────────────────────────────────────────────
 
+    private bool isForceMuted = false;
+
+    // Focus-driven mute. Called from BOTH the native path below AND the WebGL
+    // OnFocusChanged path (SocketIOManager -> UIManager.SetFocusMute). Never touches
+    // the user's setting, which lives in per-source volume / PlayerPrefs.
+    internal void SetMuteAll(bool forceMute)
+    {
+        if (forceMute == isForceMuted) return;   // both paths fire for one blur/focus event
+        isForceMuted = forceMute;
+        AudioListener.volume = forceMute ? 0f : 1f;
+    }
+
+    // A stale forced-mute must never block the user's own sound/music button.
+    private void ClearForceMute()
+    {
+        if (!isForceMuted) return;
+        isForceMuted = false;
+        AudioListener.volume = 1f;
+    }
+
     private void OnApplicationFocus(bool hasFocus)
     {
-        HandleFocus(hasFocus);
+        SetMuteAll(!hasFocus);
     }
 
     private void OnApplicationPause(bool isPaused)
     {
-        HandleFocus(!isPaused);
-    }
-
-    private void HandleFocus(bool hasFocus)
-    {
-        AudioListener.volume = hasFocus ? 1f : 0f;
+        SetMuteAll(isPaused);
     }
 }
