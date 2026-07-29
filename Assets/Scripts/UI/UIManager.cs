@@ -73,30 +73,16 @@ public class UIManager : MonoBehaviour
   private double maxPayoutMultiplier;
   private readonly Dictionary<int, double> symbolPayoutMultipliers = new Dictionary<int, double>();
 
-  [Header("Symbol Payout Info Slide")]
-  [SerializeField] private GameObject SymbolPayoutOverlay;
-  [SerializeField] private int symbolPayoutSlideIndex = -1;
-  [SerializeField] private TMP_Text SingleBARPayoutText;
-  [SerializeField] private TMP_Text DoubleBARPayoutText;
-  [SerializeField] private TMP_Text TripleBARPayoutText;
-  [SerializeField] private TMP_Text BellPayoutText;
-  [SerializeField] private TMP_Text Red7PayoutText;
-  [SerializeField] private TMP_Text Wild2xPayoutText;
-  [SerializeField] private TMP_Text Wild3xPayoutText;
-  [SerializeField] private TMP_Text Wild5xPayoutText;
-  [SerializeField] private TMP_Text Wild10xPayoutText;
-
-  [Header("Wild Combination Payout Info Slide")]
-  [SerializeField] private GameObject WildComboPayoutOverlay;
-  [SerializeField] private int wildComboPayoutSlideIndex = -1;
-  [SerializeField] private TMP_Text WildCombo3PayoutText;
-  [SerializeField] private TMP_Text WildCombo5PayoutText;
-  [SerializeField] private TMP_Text WildCombo10PayoutText;
-
-  // Not provided by the live backend - sourced from txt_config.json wildRules.mixedWildPayouts
-  private const double WildCombo3Payout = 8;
-  private const double WildCombo5Payout = 15;
-  private const double WildCombo10Payout = 50;
+  [Header("Combination Payouts (paytable slide)")]
+  [SerializeField] private TMP_Text TripleDouble7PayoutText;
+  [SerializeField] private TMP_Text TripleRed7PayoutText;
+  [SerializeField] private TMP_Text TripleBlue7PayoutText;
+  [SerializeField] private TMP_Text TripleYellow7PayoutText;
+  [SerializeField] private TMP_Text Triple5BarPayoutText;
+  [SerializeField] private TMP_Text MixedSevensPayoutText;
+  [SerializeField] private TMP_Text TripleBarPayoutText;
+  [SerializeField] private TMP_Text MixedBarsPayoutText;
+  [SerializeField] private TMP_Text MixedSevensBarsPayoutText;
 
   [Header("Information UI")]
   [SerializeField]
@@ -110,9 +96,7 @@ public class UIManager : MonoBehaviour
   [SerializeField]
   private Button PrevButton;
   [SerializeField]
-  private Image SlideContainer;
-  [SerializeField]
-  private Sprite[] InfoSlides;
+  private List<GameObject> InfoSlideObjects;   // one child GameObject per slide, cycled by ShowSlide
 
   private int currentSlideIndex = 0;
 
@@ -237,14 +221,14 @@ public class UIManager : MonoBehaviour
       if (NextButton) NextButton.onClick.RemoveAllListeners();
       if (NextButton) NextButton.onClick.AddListener(() =>
       {
-        currentSlideIndex = (currentSlideIndex + 1) % InfoSlides.Length;
+        currentSlideIndex = (currentSlideIndex + 1) % InfoSlideObjects.Count;
         ShowSlide(currentSlideIndex);
       });
 
       if (PrevButton) PrevButton.onClick.RemoveAllListeners();
       if (PrevButton) PrevButton.onClick.AddListener(() =>
       {
-        currentSlideIndex = (currentSlideIndex - 1 + InfoSlides.Length) % InfoSlides.Length;
+        currentSlideIndex = (currentSlideIndex - 1 + InfoSlideObjects.Count) % InfoSlideObjects.Count;
         ShowSlide(currentSlideIndex);
       });
     });
@@ -541,33 +525,29 @@ public class UIManager : MonoBehaviour
     UpdateBetDisplay(totalBet);
     if (PayoutText) PayoutText.text = (maxPayoutMultiplier * totalBet).ToString("F2");
     UpdateSymbolPayoutTexts(totalBet);
-    UpdateWildComboPayoutTexts(totalBet);
   }
 
   private void UpdateSymbolPayoutTexts(double totalBet)
   {
-    SetSymbolPayoutText(SingleBARPayoutText, 1, totalBet);
-    SetSymbolPayoutText(DoubleBARPayoutText, 2, totalBet);
-    SetSymbolPayoutText(TripleBARPayoutText, 3, totalBet);
-    SetSymbolPayoutText(BellPayoutText, 4, totalBet);
-    SetSymbolPayoutText(Red7PayoutText, 5, totalBet);
-    SetSymbolPayoutText(Wild2xPayoutText, 6, totalBet);
-    SetSymbolPayoutText(Wild3xPayoutText, 7, totalBet);
-    SetSymbolPayoutText(Wild5xPayoutText, 8, totalBet);
-    SetSymbolPayoutText(Wild10xPayoutText, 9, totalBet);
+    // Three-of-a-kind combos = the symbol's own payout, by id: Red7=1, Blue7=2, Yellow7=3, 5Bar=4, Bar=5.
+    SetSymbolPayoutText(TripleRed7PayoutText, 1, totalBet);
+    SetSymbolPayoutText(TripleBlue7PayoutText, 2, totalBet);
+    SetSymbolPayoutText(TripleYellow7PayoutText, 3, totalBet);
+    SetSymbolPayoutText(Triple5BarPayoutText, 4, totalBet);
+    SetSymbolPayoutText(TripleBarPayoutText, 5, totalBet);
+
+    // TODO (populate step): these four need values the per-symbol payout can't provide —
+    //   TripleDouble7   -> the Double Gold Jackpot amount (flat, not red7d's symbol payout)
+    //   MixedSevens     -> anyPayouts["sevens"]  * totalBet
+    //   MixedBars       -> anyPayouts["bars"]    * totalBet
+    //   MixedSevensBars -> anyPayouts["default"] * totalBet
+    // anyPayouts isn't plumbed into UIManager yet, so these are left unset for now.
   }
 
   private void SetSymbolPayoutText(TMP_Text text, int symbolId, double totalBet)
   {
     if (text && symbolPayoutMultipliers.TryGetValue(symbolId, out double multiplier))
       text.text = (multiplier * totalBet).ToString("F2");
-  }
-
-  private void UpdateWildComboPayoutTexts(double totalBet)
-  {
-    if (WildCombo3PayoutText) WildCombo3PayoutText.text = (WildCombo3Payout * totalBet).ToString("F2");
-    if (WildCombo5PayoutText) WildCombo5PayoutText.text = (WildCombo5Payout * totalBet).ToString("F2");
-    if (WildCombo10PayoutText) WildCombo10PayoutText.text = (WildCombo10Payout * totalBet).ToString("F2");
   }
 
   internal void ShowTicker()
@@ -628,11 +608,8 @@ public class UIManager : MonoBehaviour
 
   private void ShowSlide(int index)
   {
-    if (SlideContainer && InfoSlides != null && InfoSlides.Length > 0)
-      SlideContainer.sprite = InfoSlides[index];
-
-    if (SymbolPayoutOverlay) SymbolPayoutOverlay.SetActive(index == symbolPayoutSlideIndex);
-    if (WildComboPayoutOverlay) WildComboPayoutOverlay.SetActive(index == wildComboPayoutSlideIndex);
+    for (int i = 0; i < InfoSlideObjects.Count; i++)
+      if (InfoSlideObjects[i]) InfoSlideObjects[i].SetActive(i == index);
   }
 
   internal void SkipWinSequences()
