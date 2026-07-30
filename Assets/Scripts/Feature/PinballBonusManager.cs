@@ -97,6 +97,9 @@ public class PinballBonusManager : MonoBehaviour
   // distinct look is its own child graphic on top). A collected marble's Image sits on marbleLitSprite.
   [SerializeField] private Sprite marbleLitSprite;
   [SerializeField] private Sprite marbleUnlitSprite;
+  // The ~5 inner-circle pockets that physically touch the white bounce pegs. Whichever of these the
+  // travelling light lands on (via MoveLightTo, any route) also plays the ball-hitting-a-peg sound.
+  [SerializeField] private List<Image> bouncePegCircles = new List<Image>();
 
   [Header("Ring Animation Timing")]
   [SerializeField] private float perCircleLightDuration = 0.12f;   // time per circle as the light travels (higher = slower ball)
@@ -174,7 +177,6 @@ public class PinballBonusManager : MonoBehaviour
   // around the outer ring to the first circle (the shoot point), ready for the first shot.
   private IEnumerator PlayBonusIntro()
   {
-    if (audioManager) audioManager.PlayBonusAnimation();
     yield return StartCoroutine(UfoChaseRoutine());
     yield return StartCoroutine(LightOuterPathReverseWithTrail());
   }
@@ -279,11 +281,15 @@ public class PinballBonusManager : MonoBehaviour
 
     // Reuse the start overlay for the win summary: swap to the win-total block, fill the dynamic amount,
     // and hold — shown over the bonus board before we scroll back.
-    if (audioManager) audioManager.PlayBonusComplete();
+    if (audioManager) audioManager.PlayBonusTotalWinSting();
     if (bonusWinTotalAmount) bonusWinTotalAmount.text = TextFormat.ToSpriteDigits(_totalBonusWin.ToString("F2"));
+    // The Play button isn't part of either content block, so it doesn't get hidden by the
+    // activeContent/inactiveContent swap — hide it explicitly for the end-of-bonus display, then
+    // restore it so it's visible again for the next bonus's start screen.
+    if (bonusStartButton) bonusStartButton.gameObject.SetActive(false);
     yield return StartCoroutine(ShowBonusOverlayAndWait(bonusWinTotal, bonusTriggeredText, bonusWinOverlayHold));
+    if (bonusStartButton) bonusStartButton.gameObject.SetActive(true);
 
-    if (audioManager) audioManager.PlayBgMusic();   // restore the main-game music as we head back
     yield return StartCoroutine(TransitionFromBonus());
     // Scrolled back to the main game — hand the total to UIManager, which owns the win celebration
     // (panel + count-up + coin fountain). Fire-and-forget: it sets IsBonusWinActive, and StartSlots
@@ -298,6 +304,7 @@ public class PinballBonusManager : MonoBehaviour
   private void OnShootPressed()
   {
     if (!_featureActive || _shotInFlight || _shotsRemaining <= 0) return;
+    if (audioManager) audioManager.PlayShootBall();
     StartCoroutine(ShootRoutine());
   }
 
@@ -337,18 +344,15 @@ public class PinballBonusManager : MonoBehaviour
   // Plays the ball's journey for one shot: the outer loop, then to the backend-chosen destination.
   private IEnumerator AnimateShot(bool isChute, bool isSpecial, int selectedIndex)
   {
-    // Ticking loops for the whole journey; it's stopped (and a landing sound played) when the ball arrives.
-    if (audioManager) audioManager.PlayBallTick();
-
     // 1. Outer loop, always the same, straight through — lit as a shrinking comet trail.
     yield return LightOuterPathWithTrail();
+    if (audioManager) audioManager.PlayBallEnteredInCircle();   // exits the outer ring, enters inner routing
 
     // 2a. Chute — approach the marble entry, then collect marbles[selectedIndex] (it stays lit).
     if (isChute)
     {
       yield return LightSequence(PickRoute(marbleApproachRoutes)?.circles);
       ClearLight();
-      if (audioManager) { audioManager.StopBallTick(); audioManager.PlayBallStop(); }
       yield return CollectMarble(selectedIndex);
       yield break;
     }
@@ -360,13 +364,11 @@ public class PinballBonusManager : MonoBehaviour
       BallRoute route = PickRoute(ufo.routes);
       if (route != null) yield return LightSequence(route.circles);
       ClearLight();
-      if (audioManager) { audioManager.StopBallTick(); audioManager.PlayBallStop(); }
       yield return FlashPrize(ufo.group);
       ClearLight();
       yield break;
     }
 
-    if (audioManager) audioManager.StopBallTick();
     ClearLight();
     Debug.LogWarning($"[PinballBonus] No UFO wired for isSpecial={isSpecial}, selectedIndex={selectedIndex}.");
   }
@@ -480,6 +482,8 @@ public class PinballBonusManager : MonoBehaviour
     if (_litCircle && _litCircle != circle) _litCircle.sprite = circleUnlitSprite;
     if (circle) circle.sprite = circleLitSprite;
     _litCircle = circle;
+    if (circle && bouncePegCircles != null && bouncePegCircles.Contains(circle))
+      if (audioManager) audioManager.PlayBallHitting();
   }
 
   private void ClearLight()
@@ -494,6 +498,7 @@ public class PinballBonusManager : MonoBehaviour
   private IEnumerator FlashPrize(CanvasGroup group)
   {
     if (group == null) yield break;
+    if (audioManager) audioManager.PlayBallHittedTheAmount();   // reached the prize, starts flashing
     group.alpha = 1f;
     for (int i = 0; i < prizeFlashCount; i++)
     {
@@ -502,6 +507,7 @@ public class PinballBonusManager : MonoBehaviour
       group.alpha = 1f;
       yield return new WaitForSeconds(prizeFlashHalfCycle);
     }
+    if (audioManager) audioManager.PlayBallHitAmountSuccess();   // done flashing
   }
 
   private void ClearAllLights()

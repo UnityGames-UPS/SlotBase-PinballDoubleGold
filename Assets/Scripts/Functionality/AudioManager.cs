@@ -10,31 +10,32 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource spinSource;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioSource overlapSource;
-    [SerializeField] private AudioSource ballTickSource;   // looping source for the pinball ball-travel tick
-
-    [Header("BG Music")]
-    [SerializeField] private AudioClip clipBg;
+    [SerializeField] private AudioSource countSource;      // looping source for win-amount count-up ticks
 
     [Header("UI")]
-    [SerializeField] private AudioClip clipButton;
-    [SerializeField] private AudioClip clipUIClick;
-    [SerializeField] private AudioClip clipGameStarted;
+    [SerializeField] private AudioClip clipButton;           // any button press except bet +/- and Info/Back
+    [SerializeField] private AudioClip clipInfoButton;       // Info button (opens paytable) AND Back-to-Game button
+    [SerializeField] private AudioClip clipBetButton;        // bet +/- buttons
 
     [Header("Spin")]
     [SerializeField] private AudioClip clipSpinLoop;
     [SerializeField] private AudioClip clipReelStop;
+    [SerializeField] private AudioClip clipPinballIconAppearsInReel;   // a reel lands with a Pinball (id 11) icon showing; once per reel, not once per icon
 
-    [Header("Symbols")]
-    [SerializeField] private AudioClip clipNormalIcon;
+    [Header("Win Count-up")]
+    [SerializeField] private AudioClip clipCountLoop;       // loops while a win amount counts up
+    [SerializeField] private AudioClip clipCountStop;       // single play when the count-up finishes
 
     [Header("Pinball Bonus")]
-    [SerializeField] private AudioClip clipBonusBg;         // bonus-game background music (loop)
-    [SerializeField] private AudioClip clipBonusScatter;    // 3 Pinball trigger symbols land/flash
-    [SerializeField] private AudioClip clipBonusAnimation;  // bonus intro flourish
-    [SerializeField] private AudioClip clipBallTick;        // ball travelling the ring (loop)
-    [SerializeField] private AudioClip clipBallStop;        // ball lands/stops on a prize
-    [SerializeField] private AudioClip clipBonusComplete;   // bonus-complete sting
-    [SerializeField] private AudioClip clipBigWin;          // big-win celebration (pinball bonus win)
+    [SerializeField] private AudioClip clipBonusBgMusic;             // loops for the whole bonus feature
+    [SerializeField] private AudioClip clipThreePinballsFlash;       // 3 Pinball symbols flash on the winning line, right before scrolling into the bonus
+    [SerializeField] private AudioClip clipShootBall;                // Shoot Ball button press
+    [SerializeField] private AudioClip clipBallEnteredInCircle;      // ball exits the outer ring and enters the inner-circle routing
+    [SerializeField] private AudioClip clipBallHitting;              // ball bounces off a white peg in the inner circle (any of the ~5 bouncePegCircles)
+    [SerializeField] private AudioClip clipBallHittedTheAmount;      // ball reaches its prize (UFO/marble) and it starts flashing
+    [SerializeField] private AudioClip clipBallHitAmountSuccess;     // the prize (UFO/marble) finishes flashing
+    [SerializeField] private AudioClip clipBonusTotalWinSting;       // once, as the "BONUS COMPLETE / TOTAL WIN" overlay appears, before scrolling back
+    [SerializeField] private AudioClip clipBigWin; // "big win.mp3" — win panel + coin celebration after scrolling back up to the base game
 
     private bool _musicEnabled = true;
     private bool _sfxEnabled = true;
@@ -48,11 +49,6 @@ public class AudioManager : MonoBehaviour
         _sfxEnabled = PlayerPrefs.GetInt(PrefKeySFX, 1) == 1;
         ApplyMusicVolume();
         ApplySfxVolume();
-    }
-
-    private void Start()
-    {
-        PlayBgMusic();
     }
 
     // ── Volume Control ────────────────────────────────────────────────────────
@@ -86,7 +82,7 @@ public class AudioManager : MonoBehaviour
         if (sfxSource) sfxSource.volume = v;
         if (overlapSource) overlapSource.volume = v;
         if (spinSource) spinSource.volume = v;
-        if (ballTickSource) ballTickSource.volume = v;
+        if (countSource) countSource.volume = v;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -97,14 +93,6 @@ public class AudioManager : MonoBehaviour
         source.PlayOneShot(clip);
     }
 
-    private void PlayLoop(AudioSource source, AudioClip clip)
-    {
-        if (source == null || clip == null) return;
-        source.clip = clip;
-        source.loop = true;
-        source.Play();
-    }
-
     private void StopSource(AudioSource source)
     {
         if (source == null) return;
@@ -112,23 +100,11 @@ public class AudioManager : MonoBehaviour
         source.loop = false;
     }
 
-    // ── BG Music ──────────────────────────────────────────────────────────────
-
-    internal void PlayBgMusic()
-    {
-        if (bgMusicSource == null || clipBg == null) return;
-        if (bgMusicSource.isPlaying && bgMusicSource.clip == clipBg) return;
-        bgMusicSource.clip = clipBg;
-        bgMusicSource.loop = true;
-        bgMusicSource.volume = _musicEnabled ? 1f : 0f;
-        bgMusicSource.Play();
-    }
-
     // ── UI ────────────────────────────────────────────────────────────────────
 
     internal void PlayButton() => PlayOneShot(sfxSource, clipButton);
-    internal void PlayUIClick() => PlayOneShot(sfxSource, clipUIClick);
-    internal void PlayGameStarted() => PlayOneShot(sfxSource, clipGameStarted);
+    internal void PlayInfoButton() => PlayOneShot(sfxSource, clipInfoButton);
+    internal void PlayBetButton() => PlayOneShot(sfxSource, clipBetButton);
 
     // ── Spin ──────────────────────────────────────────────────────────────────
 
@@ -136,7 +112,7 @@ public class AudioManager : MonoBehaviour
     {
         if (spinSource == null || clipSpinLoop == null) return;
         spinSource.clip = clipSpinLoop;
-        spinSource.loop = false;
+        spinSource.loop = true;
         spinSource.volume = _sfxEnabled ? 1f : 0f;
         spinSource.Play();
     }
@@ -144,40 +120,43 @@ public class AudioManager : MonoBehaviour
     internal void StopSpinLoop() => StopSource(spinSource);
 
     internal void PlayReelStop() => PlayOneShot(overlapSource, clipReelStop);
+    internal void PlayPinballIconAppearsInReel() => PlayOneShot(overlapSource, clipPinballIconAppearsInReel);
 
-    // ── Symbols ───────────────────────────────────────────────────────────────
+    // ── Win Count-up ──────────────────────────────────────────────────────────
 
-    internal void PlayNormalIcon() => PlayOneShot(sfxSource, clipNormalIcon);
+    internal void PlayCountLoop()
+    {
+        if (countSource == null || clipCountLoop == null) return;
+        countSource.clip = clipCountLoop;
+        countSource.loop = true;
+        countSource.volume = _sfxEnabled ? 1f : 0f;
+        countSource.Play();
+    }
+
+    internal void StopCountLoop() => StopSource(countSource);
+
+    internal void PlayCountStop() => PlayOneShot(sfxSource, clipCountStop);
 
     // ── Pinball Bonus ─────────────────────────────────────────────────────────
 
     internal void PlayBonusBgMusic()
     {
-        if (bgMusicSource == null || clipBonusBg == null) return;
-        if (bgMusicSource.isPlaying && bgMusicSource.clip == clipBonusBg) return;
-        bgMusicSource.clip = clipBonusBg;
+        if (bgMusicSource == null || clipBonusBgMusic == null) return;
+        if (bgMusicSource.isPlaying && bgMusicSource.clip == clipBonusBgMusic) return;
+        bgMusicSource.clip = clipBonusBgMusic;
         bgMusicSource.loop = true;
         bgMusicSource.volume = _musicEnabled ? 1f : 0f;
         bgMusicSource.Play();
     }
 
-    internal void PlayBonusScatter() => PlayOneShot(sfxSource, clipBonusScatter);
-    internal void PlayBonusAnimation() => PlayOneShot(sfxSource, clipBonusAnimation);
-    internal void PlayBallStop() => PlayOneShot(overlapSource, clipBallStop);
-    internal void PlayBonusComplete() => PlayOneShot(sfxSource, clipBonusComplete);
+    internal void PlayThreePinballsFlash() => PlayOneShot(sfxSource, clipThreePinballsFlash);
+    internal void PlayBallEnteredInCircle() => PlayOneShot(sfxSource, clipBallEnteredInCircle);
+    internal void PlayBallHitting() => PlayOneShot(sfxSource, clipBallHitting);
+    internal void PlayBallHittedTheAmount() => PlayOneShot(sfxSource, clipBallHittedTheAmount);
+    internal void PlayBallHitAmountSuccess() => PlayOneShot(sfxSource, clipBallHitAmountSuccess);
+    internal void PlayBonusTotalWinSting() => PlayOneShot(sfxSource, clipBonusTotalWinSting);
     internal void PlayBigWin() => PlayOneShot(sfxSource, clipBigWin);
-
-    internal void PlayBallTick()
-    {
-        if (ballTickSource == null || clipBallTick == null) return;
-        if (ballTickSource.isPlaying && ballTickSource.clip == clipBallTick) return;
-        ballTickSource.clip = clipBallTick;
-        ballTickSource.loop = true;
-        ballTickSource.volume = _sfxEnabled ? 1f : 0f;
-        ballTickSource.Play();
-    }
-
-    internal void StopBallTick() => StopSource(ballTickSource);
+    internal void PlayShootBall() => PlayOneShot(sfxSource, clipShootBall);
 
     // ── Focus Handling ────────────────────────────────────────────────────────
 

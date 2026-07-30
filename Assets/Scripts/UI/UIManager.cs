@@ -205,7 +205,7 @@ public class UIManager : MonoBehaviour
     if (Info_Button) Info_Button.onClick.RemoveAllListeners();
     if (Info_Button) Info_Button.onClick.AddListener(() =>
     {
-      if (audioManager) audioManager.PlayUIClick();
+      if (audioManager) audioManager.PlayInfoButton();
       currentSlideIndex = 0;
       InfoSlidesPanel.SetActive(true);
       ShowSlide(currentSlideIndex);
@@ -214,6 +214,7 @@ public class UIManager : MonoBehaviour
       if (BackToGame_Button) BackToGame_Button.onClick.RemoveAllListeners();
       if (BackToGame_Button) BackToGame_Button.onClick.AddListener(() =>
       {
+        if (audioManager) audioManager.PlayInfoButton();
         InfoSlidesPanel.SetActive(false);
         OnInfoScreenToggled?.Invoke(false);
       });
@@ -401,7 +402,7 @@ public class UIManager : MonoBehaviour
   {
     isMusic = !isMusic;
     SetButtonSprite(Music_Button, isMusic ? MusicOnSprite : MusicOffSprite);
-    if (audioManager) audioManager.PlayUIClick();
+    if (audioManager) audioManager.PlayButton();
     if (audioManager) audioManager.SetMusicEnabled(isMusic);
   }
 
@@ -409,7 +410,7 @@ public class UIManager : MonoBehaviour
   {
     isSound = !isSound;
     SetButtonSprite(Sound_Button, isSound ? SoundOnSprite : SoundOffSprite);
-    if (audioManager) audioManager.PlayUIClick();
+    if (audioManager) audioManager.PlayButton();
     if (audioManager) audioManager.SetSfxEnabled(isSound);
   }
 
@@ -445,7 +446,6 @@ public class UIManager : MonoBehaviour
     if (winAmount <= 0) yield break;
     if (_bonusWinActive) yield break;
     _spinWinActive = true;
-    if (audioManager) audioManager.PlayNormalIcon();
     if (SpinWinPanel) SpinWinPanel.SetActive(true);
     float display = 0f;
     if (TotalWin_text)
@@ -455,8 +455,12 @@ public class UIManager : MonoBehaviour
         .SetTarget(TotalWin_text);
     }
     if (SpinWinText)
+    {
+      if (audioManager) audioManager.PlayCountLoop();
       yield return DOTween.To(() => display, v => { display = v; SpinWinText.text = TextFormat.ToSpriteDigits(v.ToString("F2")); },
         (float)winAmount, spinWinCountDuration).SetTarget(SpinWinText).WaitForCompletion();
+      if (audioManager) { audioManager.StopCountLoop(); audioManager.PlayCountStop(); }
+    }
     yield return new WaitForSeconds(0.5f);
     HideSpinWin();
     _spinWinActive = false;
@@ -573,8 +577,12 @@ public class UIManager : MonoBehaviour
 
     float bonusWinDisplay = 0f;
     if (BonusWinAmountText)
+    {
+      if (audioManager) audioManager.PlayCountLoop();
       yield return DOTween.To(() => bonusWinDisplay, v => { bonusWinDisplay = v; BonusWinAmountText.text = TextFormat.ToSpriteDigits(v.ToString("F2")); },
         (float)totalWin, bonusWinCountDuration).SetTarget(BonusWinAmountText).WaitForCompletion();
+      if (audioManager) { audioManager.StopCountLoop(); audioManager.PlayCountStop(); }
+    }
     else
       yield return new WaitForSeconds(bonusWinCountDuration);
 

@@ -300,7 +300,7 @@ public class SlotBehaviour : MonoBehaviour
 
   private void ChangeBet(bool IncDec)
   {
-    if (audioController) audioController.PlayButton();
+    if (audioController) audioController.PlayBetButton();
     if (IncDec)
     {
       BetCounter++;
@@ -625,7 +625,7 @@ public class SlotBehaviour : MonoBehaviour
 
       // Flash the winning pinball line(s), then hand off to the bonus manager, which runs the
       // base->bonus transition and the per-press shot loop.
-      if (audioController) audioController.PlayBonusScatter();
+      if (audioController) audioController.PlayThreePinballsFlash();
       List<int> pinballLines = FindPinballLines();
       yield return StartCoroutine(FlashPinballTrigger(pinballLines));
       int startShots = SocketManager.ResultData.payload.features.pinball.shotsRemaining;
@@ -982,10 +982,20 @@ public class SlotBehaviour : MonoBehaviour
   {
     StopReelSpin(Slot_Transform[index], index, ReelTopY, ReelRestY, reelSpeed);
     if (audioController) audioController.PlayReelStop();
+    // Once per reel even if it shows the Pinball icon more than once — not once per icon.
+    if (audioController && ReelHasPinballIcon(index)) audioController.PlayPinballIconAppearsInReel();
     if (StopSpinToggle)
       yield return null;
     else
       yield return new WaitForSeconds(0.2f);
+  }
+
+  // True if reel column `col`'s landed strip (all 5 rows, including decorative) shows the Pinball symbol (id 11).
+  private bool ReelHasPinballIcon(int col)
+  {
+    for (int row = 0; row < numberOfRows; row++)
+      if (_displayMatrix[row, col] == 11) return true;
+    return false;
   }
 
   private void KillAllTweens()

@@ -316,7 +316,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
   m_PrefabInstance: {fileID: 357240838}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1794778745}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 471a4705556b575409f6775b2f1788ec, type: 3}
@@ -6934,11 +6934,90 @@ PrefabInstance:
     - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
       propertyPath: clipBigWin
       value: 
-      objectReference: {fileID: 8300000, guid: bbc1843288790fa48aebb4b15c7b9b4b, type: 3}
+      objectReference: {fileID: 8300000, guid: a282c6a7a3621af4088d23910f5a5577, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipButton
+      value: 
+      objectReference: {fileID: 8300000, guid: 83bfbb1fd6dbff64ab3afd377accdd77, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBonusBg
+      value: 
+      objectReference: {fileID: 8300000, guid: 7d0eaf9fc567b0341b3c2fd09b5d60e5, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: countSource
+      value: 
+      objectReference: {fileID: 1794778753}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipReelStop
+      value: 
+      objectReference: {fileID: 8300000, guid: 91e4b136173ba5a419a7bc1550df586e, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipSpinLoop
+      value: 
+      objectReference: {fileID: 8300000, guid: e66d140c36a05634396375ab153b05ca, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBetButton
+      value: 
+      objectReference: {fileID: 8300000, guid: 17b75ff90a089764eac9d16a2be9c804, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipCountLoop
+      value: 
+      objectReference: {fileID: 8300000, guid: 5f493091c476aee4d9cbb49572b7c741, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipCountStop
+      value: 
+      objectReference: {fileID: 8300000, guid: 6b9db9b40bb3e884daf7e77fbd950625, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipShootBall
+      value: 
+      objectReference: {fileID: 8300000, guid: 768e48f35fc0a84469192ab34ba66962, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipInfoButton
+      value: 
+      objectReference: {fileID: 8300000, guid: 83468886a3aa0de44b1db7991c04eea8, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBallHitting
+      value: 
+      objectReference: {fileID: 8300000, guid: d7473e3a0287c0d4b8d58f42c689991c, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBonusBgMusic
+      value: 
+      objectReference: {fileID: 8300000, guid: 7d0eaf9fc567b0341b3c2fd09b5d60e5, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBonusComplete
+      value: 
+      objectReference: {fileID: 8300000, guid: 1b0511c8d8159994189a46dc18042d2e, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBonusTotalWinSting
+      value: 
+      objectReference: {fileID: 8300000, guid: 1b0511c8d8159994189a46dc18042d2e, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipThreePinballsFlash
+      value: 
+      objectReference: {fileID: 8300000, guid: 3344c81c3e3dd4547971e85818625b70, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBallEnteredInCircle
+      value: 
+      objectReference: {fileID: 8300000, guid: 0002614058165164bb8690dfdbb6f68e, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBallHittedTheAmount
+      value: 
+      objectReference: {fileID: 8300000, guid: fba17ed4fffbd114aa52f93a2c921a99, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipBallHitAmountSuccess
+      value: 
+      objectReference: {fileID: 8300000, guid: 99fe7dd86c46cbe4fbb2194760b77cad, type: 3}
+    - target: {fileID: 6293375610026765241, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      propertyPath: clipPinballIconAppearsInReel
+      value: 
+      objectReference: {fileID: 8300000, guid: aab6aae82c0b5f94a93d1cc2e24ab554, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 882695972752793837, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1794778753}
   m_SourcePrefab: {fileID: 100100000, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
 --- !u!1 &360901512
 GameObject:
@@ -15900,8 +15979,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.38, y: -15.14}
-  m_SizeDelta: {x: 491.49, y: 127.49}
+  m_AnchoredPosition: {x: 0.38, y: -21.02}
+  m_SizeDelta: {x: 491.49, y: 98.01}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &913492850
 MonoBehaviour:
@@ -15925,15 +16004,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: 20.00
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8d12d873d5e56544c81ed4c7b1ff1c8c, type: 2}
-  m_sharedMaterial: {fileID: -8084213916318921109, guid: 8d12d873d5e56544c81ed4c7b1ff1c8c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b73190599be15a14aa032efee010485c, type: 2}
+  m_sharedMaterial: {fileID: -6131664381816334446, guid: b73190599be15a14aa032efee010485c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278196961
-  m_fontColor: {r: 0.88235295, g: 0.10304148, b: 0, a: 1}
+    rgba: 4278190153
+  m_fontColor: {r: 0.28627452, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -15950,15 +16029,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 126.45
-  m_fontSizeBase: 36
+  m_fontSize: 100
+  m_fontSizeBase: 100
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 120
   m_fontSizeMax: 150
   m_fontStyle: 0
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -16975,6 +17054,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 193351359481444546, guid: 40ef82588dab64d42994ee290d1a07ac, type: 3}
   m_PrefabInstance: {fileID: 979406359}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &979406361 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5679074077776642616, guid: 40ef82588dab64d42994ee290d1a07ac, type: 3}
+  m_PrefabInstance: {fileID: 979406359}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &980700595
 GameObject:
   m_ObjectHideFlags: 0
@@ -20822,6 +20912,12 @@ MonoBehaviour:
     - {fileID: 1871202270}
   marbleLitSprite: {fileID: -957304140317272747, guid: 63442241843c59549a724b75cee6f6ca, type: 3}
   marbleUnlitSprite: {fileID: 2451630525879134751, guid: 63442241843c59549a724b75cee6f6ca, type: 3}
+  bouncePegCircles:
+  - {fileID: 241514514}
+  - {fileID: 1591601289}
+  - {fileID: 23584281}
+  - {fileID: 979406361}
+  - {fileID: 1332068888}
   perCircleLightDuration: 0.05
   outerTrailMax: 2
   marbleLandHold: 0.5
@@ -24715,8 +24811,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -19.68}
-  m_SizeDelta: {x: 491.49, y: 127.49}
+  m_AnchoredPosition: {x: 0, y: -27.38}
+  m_SizeDelta: {x: 491.49, y: 119.09}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1363799092
 MonoBehaviour:
@@ -24740,15 +24836,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: 20.00
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8d12d873d5e56544c81ed4c7b1ff1c8c, type: 2}
-  m_sharedMaterial: {fileID: -8084213916318921109, guid: 8d12d873d5e56544c81ed4c7b1ff1c8c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b73190599be15a14aa032efee010485c, type: 2}
+  m_sharedMaterial: {fileID: -6131664381816334446, guid: b73190599be15a14aa032efee010485c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278196961
-  m_fontColor: {r: 0.88235295, g: 0.10304148, b: 0, a: 1}
+    rgba: 4278190153
+  m_fontColor: {r: 0.28627452, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -24765,12 +24861,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 126.45
-  m_fontSizeBase: 36
+  m_fontSize: 100
+  m_fontSizeBase: 100
   m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 120
-  m_fontSizeMax: 150
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 110
+  m_fontSizeMax: 110
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -32766,6 +32862,108 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1791112246}
   m_CullTransparentMesh: 1
+--- !u!1 &1794778745 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 882695972752793837, guid: 0574a4cf18d5cd94b97009e12488e861, type: 3}
+  m_PrefabInstance: {fileID: 357240838}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &1794778753
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794778745}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1795146770
 GameObject:
   m_ObjectHideFlags: 0
