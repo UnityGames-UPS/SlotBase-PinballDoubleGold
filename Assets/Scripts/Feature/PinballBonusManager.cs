@@ -364,7 +364,17 @@ public class PinballBonusManager : MonoBehaviour
       BallRoute route = PickRoute(ufo.routes);
       if (route != null) yield return LightSequence(route.circles);
       ClearLight();
+
+      // UFOs sit lit by default between shots. Make sure the winner is lit (it should already be),
+      // dim every other UFO so it stands out, then flash it (alpha only — sprite stays lit throughout).
+      if (ufo.image && ufoLitSprite) ufo.image.sprite = ufoLitSprite;
+      if (ufos != null)
+        foreach (Ufo other in ufos)
+          if (other != null && other != ufo && other.image && ufoDimSprite) other.image.sprite = ufoDimSprite;
+
       yield return FlashPrize(ufo.group);
+
+      SetAllUfos(true);   // back to lit across the board, ready for the next shot
       ClearLight();
       yield break;
     }
