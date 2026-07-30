@@ -155,6 +155,7 @@ public class PinballBonusManager : MonoBehaviour
     UpdateShotsAmount(_shotsRemaining);
     UpdateBonusWinAmount(0);
     if (totalBetAmount) totalBetAmount.text = _totalBet.ToString("F2");
+    RandomizeUfoAssignments();
     RefreshPrizeLabels();
     RefreshPlusShotLabels();
     ClearAllLights();
@@ -279,7 +280,7 @@ public class PinballBonusManager : MonoBehaviour
     // Reuse the start overlay for the win summary: swap to the win-total block, fill the dynamic amount,
     // and hold — shown over the bonus board before we scroll back.
     if (audioManager) audioManager.PlayBonusComplete();
-    if (bonusWinTotalAmount) bonusWinTotalAmount.text = _totalBonusWin.ToString("F2");
+    if (bonusWinTotalAmount) bonusWinTotalAmount.text = TextFormat.ToSpriteDigits(_totalBonusWin.ToString("F2"));
     yield return StartCoroutine(ShowBonusOverlayAndWait(bonusWinTotal, bonusTriggeredText, bonusWinOverlayHold));
 
     if (audioManager) audioManager.PlayBgMusic();   // restore the main-game music as we head back
@@ -452,6 +453,7 @@ public class PinballBonusManager : MonoBehaviour
     }
     Marble m = marbles[index];
     if (m != null && m.image && marbleLitSprite) m.image.sprite = marbleLitSprite;
+    if (m != null && m.boardImage && m.boardLitSprite) m.boardImage.sprite = m.boardLitSprite;   // jackpot board layer
     if (m != null) yield return FlashPrize(m.group);   // celebrate the collect; the marble stays lit after
     yield return new WaitForSeconds(marbleLandHold);
   }
@@ -526,7 +528,40 @@ public class PinballBonusManager : MonoBehaviour
         {
           if (m.group) m.group.alpha = 1f;
           if (m.image && marbleUnlitSprite) m.image.sprite = marbleUnlitSprite;
+          if (m.boardImage && m.boardUnlitSprite) m.boardImage.sprite = m.boardUnlitSprite;   // jackpot board layer
         }
+  }
+
+  // Shuffles which physical UFOs are the "+1 Shot" specials this bonus round. isSpecial/prizeIndex are
+  // read live everywhere (FindUfo, RefreshPrizeLabels, RefreshPlusShotLabels) so reassigning them here,
+  // once per round before those run, is all that's needed — no other code depends on a fixed layout.
+  private void RandomizeUfoAssignments()
+  {
+    PinballConfig cfg = socketManager != null && socketManager.GameFeatures != null
+      ? socketManager.GameFeatures.pinball : null;
+    if (cfg == null || ufos == null) return;
+    int specialCount = cfg.specialPrizes != null ? cfg.specialPrizes.Count : 0;
+    int normalCount = cfg.prizes != null ? cfg.prizes.Count : 0;
+    if (ufos.Count < specialCount + normalCount)
+    {
+      Debug.LogWarning($"[PinballBonus] {ufos.Count} UFOs wired, but config needs {normalCount} normal + {specialCount} special.");
+      return;
+    }
+
+    List<Ufo> shuffled = new List<Ufo>(ufos);
+    for (int i = shuffled.Count - 1; i > 0; i--)
+    {
+      int j = Random.Range(0, i + 1);
+      (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
+    }
+    for (int i = 0; i < shuffled.Count; i++)
+    {
+      Ufo u = shuffled[i];
+      if (u == null) continue;
+      if (i < specialCount) { u.isSpecial = true; u.prizeIndex = i; }
+      else if (i < specialCount + normalCount) { u.isSpecial = false; u.prizeIndex = i - specialCount; }
+      else { u.isSpecial = false; u.prizeIndex = -1; }   // extra UFOs beyond the config's pools sit unused
+    }
   }
 
   // Sets each UFO/marble prize label from the init base values × the current line bet — i.e. the
@@ -572,8 +607,8 @@ public class PinballBonusManager : MonoBehaviour
       }
   }
 
-  // Shows the "+1 Shot" object only on the special UFOs (hidden on the rest). Runs at bonus start and
-  // reads ufo.isSpecial — set in the editor for a fixed layout, or by code once a per-bonus layout lands.
+  // Shows the "+1 Shot" object only on the special UFOs (hidden on the rest). Runs at bonus start,
+  // after RandomizeUfoAssignments has set this round's ufo.isSpecial layout.
   private void RefreshPlusShotLabels()
   {
     if (ufos == null) return;

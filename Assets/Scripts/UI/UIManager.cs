@@ -34,7 +34,10 @@ public class UIManager : MonoBehaviour
   [SerializeField] private TMP_Text BalanceAmount;
   [SerializeField] private TMP_Text TotalBet_text;
   [SerializeField] private TMP_Text TotalWin_text;
-  [SerializeField] private TMP_Text PayoutText;
+  [SerializeField] private TMP_Text PinballPayoutText;
+  // Same Double Gold Jackpot figure as TripleDouble7PayoutText (totalBet x 1000), but this is the
+  // main-UI-screen object ("777PayoutText" in the scene — digits can't lead a C# identifier).
+  [SerializeField] private TMP_Text SevenSevenSevenPayoutText;
 
   [Header("Game Content")]
   // The main game content root, scaled by win sequences (SkipWinSequences resets it). Not an intro.
@@ -70,7 +73,6 @@ public class UIManager : MonoBehaviour
   private List<double> betAmounts;
   internal int BetCount => betAmounts?.Count ?? 0;
   internal double GetBetAmount(int index) => betAmounts[index];
-  private double maxPayoutMultiplier;
   private readonly Dictionary<int, double> symbolPayoutMultipliers = new Dictionary<int, double>();
 
   [Header("Combination Payouts (paytable slide)")]
@@ -132,9 +134,7 @@ public class UIManager : MonoBehaviour
   [Header("Spin Win Display")]
   [SerializeField] private GameObject SpinWinPanel;
   [SerializeField] private TMP_Text SpinWinText;
-  [SerializeField] private GameObject SpinWinCoinSplash;
-  [SerializeField] private ImageAnimation SpinWinCoinSplashAnim;
-  [SerializeField] private float spinWinCountDuration = 1f;
+  [SerializeField] private float spinWinCountDuration = 2.0f;
 
   [Header("Disconnection Popup")]
   [SerializeField]
@@ -446,18 +446,7 @@ public class UIManager : MonoBehaviour
     if (_bonusWinActive) yield break;
     _spinWinActive = true;
     if (audioManager) audioManager.PlayNormalIcon();
-    if (SpinWinPanel)
-    {
-      SpinWinPanel.SetActive(true);
-      SpinWinPanel.transform.localScale = Vector3.one;
-      SpinWinPanel.transform.DOScale(1.2f, spinWinCountDuration).SetEase(Ease.OutQuad);
-    }
-    if (SpinWinCoinSplash) SpinWinCoinSplash.SetActive(true);
-    if (SpinWinCoinSplashAnim)
-    {
-      SpinWinCoinSplashAnim.doLoopAnimation = false;
-      SpinWinCoinSplashAnim.StartAnimation();
-    }
+    if (SpinWinPanel) SpinWinPanel.SetActive(true);
     float display = 0f;
     if (TotalWin_text)
     {
@@ -466,7 +455,7 @@ public class UIManager : MonoBehaviour
         .SetTarget(TotalWin_text);
     }
     if (SpinWinText)
-      yield return DOTween.To(() => display, v => { display = v; SpinWinText.text = v.ToString("F3"); },
+      yield return DOTween.To(() => display, v => { display = v; SpinWinText.text = TextFormat.ToSpriteDigits(v.ToString("F2")); },
         (float)winAmount, spinWinCountDuration).SetTarget(SpinWinText).WaitForCompletion();
     yield return new WaitForSeconds(0.5f);
     HideSpinWin();
@@ -477,7 +466,6 @@ public class UIManager : MonoBehaviour
   internal void HideSpinWin()
   {
     if (SpinWinPanel) SpinWinPanel.SetActive(false);
-    if (SpinWinCoinSplash) SpinWinCoinSplash.SetActive(false);
     if (SpinWinText) SpinWinText.text = "";
   }
 
@@ -508,22 +496,17 @@ public class UIManager : MonoBehaviour
   {
     betAmounts = bets;
 
-    maxPayoutMultiplier = 0;
     symbolPayoutMultipliers.Clear();
     if (symbols != null)
-    {
       foreach (Symbol symbol in symbols)
-      {
         symbolPayoutMultipliers[symbol.id] = symbol.payout;
-        if (symbol.payout > maxPayoutMultiplier) maxPayoutMultiplier = symbol.payout;
-      }
-    }
   }
 
   internal void SetBet(double totalBet)
   {
     UpdateBetDisplay(totalBet);
-    if (PayoutText) PayoutText.text = (maxPayoutMultiplier * totalBet).ToString("F2");
+    if (PinballPayoutText) PinballPayoutText.text = (totalBet * 500).ToString("F2");
+    if (SevenSevenSevenPayoutText) SevenSevenSevenPayoutText.text = (totalBet * 2000).ToString("F2");
     UpdateSymbolPayoutTexts(totalBet);
   }
 
@@ -536,8 +519,10 @@ public class UIManager : MonoBehaviour
     SetSymbolPayoutText(Triple5BarPayoutText, 4, totalBet);
     SetSymbolPayoutText(TripleBarPayoutText, 5, totalBet);
 
-    // TODO (populate step): these four need values the per-symbol payout can't provide —
-    //   TripleDouble7   -> the Double Gold Jackpot amount (flat, not red7d's symbol payout)
+    // Double Gold Jackpot: totalBet x 2000, flat (not a per-symbol payout lookup).
+    if (TripleDouble7PayoutText) TripleDouble7PayoutText.text = (totalBet * 2000).ToString("F2");
+
+    // TODO (populate step): these three need values the per-symbol payout can't provide —
     //   MixedSevens     -> anyPayouts["sevens"]  * totalBet
     //   MixedBars       -> anyPayouts["bars"]    * totalBet
     //   MixedSevensBars -> anyPayouts["default"] * totalBet
@@ -579,7 +564,7 @@ public class UIManager : MonoBehaviour
 
     yield return new WaitForSeconds(bonusWinShowDelay);
 
-    if (BonusWinAmountText) BonusWinAmountText.text = "0.000";
+    if (BonusWinAmountText) BonusWinAmountText.text = TextFormat.ToSpriteDigits("0.00");
     if (BonusWinSequencePanel) BonusWinSequencePanel.SetActive(true);
     if (BonusWinPanel) { ImageAnimation panelAnim = BonusWinPanel.GetComponent<ImageAnimation>(); if (panelAnim) panelAnim.StartAnimation(); }
     if (BonusWinCoinFallingAnim) { BonusWinCoinFallingAnim.doLoopAnimation = true; BonusWinCoinFallingAnim.StartAnimation(); }
@@ -588,7 +573,7 @@ public class UIManager : MonoBehaviour
 
     float bonusWinDisplay = 0f;
     if (BonusWinAmountText)
-      yield return DOTween.To(() => bonusWinDisplay, v => { bonusWinDisplay = v; BonusWinAmountText.text = v.ToString("F3"); },
+      yield return DOTween.To(() => bonusWinDisplay, v => { bonusWinDisplay = v; BonusWinAmountText.text = TextFormat.ToSpriteDigits(v.ToString("F2")); },
         (float)totalWin, bonusWinCountDuration).SetTarget(BonusWinAmountText).WaitForCompletion();
     else
       yield return new WaitForSeconds(bonusWinCountDuration);

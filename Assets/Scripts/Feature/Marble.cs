@@ -16,4 +16,9 @@ public class Marble : MonoBehaviour
 
   [Tooltip("CanvasGroup on the marble root; its alpha is blinked when collected so the graphic and prize label flash together.")]
   public CanvasGroup group;
+
+  [Tooltip("Optional graphic layered on top of the marble (e.g. the jackpot board), swapped lit/unlit alongside the base marble. Leave empty on normal marbles.")]
+  public Image boardImage;
+  public Sprite boardLitSprite;
+  public Sprite boardUnlitSprite;
 }

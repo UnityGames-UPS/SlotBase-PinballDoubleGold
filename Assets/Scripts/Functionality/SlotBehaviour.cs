@@ -85,6 +85,12 @@ public class SlotBehaviour : MonoBehaviour
   // One entry per payline (0..8); activated when that line holds the three id-11 Pinball symbols.
   // Works whether each is a single image or a parent with child boxes/lines.
   [SerializeField] private List<GameObject> PinballLineGraphics;
+  // Per-payline win-amount labels (indexed 0..8, same as PinballLineGraphics); each shows its line's payout.
+  [SerializeField] private List<TMP_Text> PinballLineWinTexts;
+  // Per-payline win-amount panels (black background behind PinballLineWinTexts), indexed 0..8. These are
+  // normally always active for the per-payline win cycle; suppressed during the 3-pinball trigger flash
+  // since that line has no win amount to show.
+  [SerializeField] private List<GameObject> PinballLineWinPanels;
   [SerializeField] private float pinballFlashDuration = 2f;
   [SerializeField] private float pinballFlashHalfCycle = 0.3f;
   [SerializeField] private float pinballFlashMinAlpha = 0.2f;
@@ -444,6 +450,11 @@ public class SlotBehaviour : MonoBehaviour
     {
       PaylineGraphics[i].SetActive(false);
     }
+    // The Phase-2 cycle uses the pinball line graphics — clear those too so an interrupted cycle
+    // doesn't leave one active.
+    if (PinballLineGraphics != null)
+      for (int i = 0; i < PinballLineGraphics.Count; i++)
+        if (PinballLineGraphics[i]) PinballLineGraphics[i].SetActive(false);
     tweenroutine = StartCoroutine(TweenRoutine());
   }
 
@@ -566,7 +577,7 @@ public class SlotBehaviour : MonoBehaviour
         winLine.Add(item.lineIndex);
       }
       lastWinLineCount = winLine.Count;
-      CheckPayoutLineBackend(winLine);
+      CheckPayoutLineBackend(winLine, willTriggerPinball: willTriggerPinball);
     }
     else
     {
@@ -607,8 +618,11 @@ public class SlotBehaviour : MonoBehaviour
 
     if (willTriggerPinball)
     {
-      // Clear any lingering base win animation so it doesn't play under the transition fade.
-      uiManager.SkipWinSequences();
+      // Let any other-line wins (all-together display + total win amount) finish playing naturally —
+      // no individual per-line cycle for a pinball-trigger spin — before flashing the pinball line.
+      if (_paylineCycleCoroutine != null) yield return _paylineCycleCoroutine;
+      yield return new WaitUntil(() => !uiManager.IsWinSequenceActive);
+
       // Flash the winning pinball line(s), then hand off to the bonus manager, which runs the
       // base->bonus transition and the per-press shot loop.
       if (audioController) audioController.PlayBonusScatter();
@@ -712,6 +726,9 @@ public class SlotBehaviour : MonoBehaviour
         if (cg) lineGroups.Add(cg);
         else Debug.LogWarning($"[PinballBonus] Line graphic '{g.name}' has no CanvasGroup — it'll show but won't flash. Add one to enable the flash.");
       }
+      // The 3-pinball line has no win amount — hide its (normally always-active) win panel during the flash.
+      if (PinballLineWinPanels != null && line >= 0 && line < PinballLineWinPanels.Count && PinballLineWinPanels[line])
+        PinballLineWinPanels[line].SetActive(false);
       var rows = SocketManager.InitialData.lines[line];
       for (int col = 0; col < numberOfSlots; col++)
       {
@@ -725,8 +742,13 @@ public class SlotBehaviour : MonoBehaviour
     if (halfCycles % 2 != 0) halfCycles++;
     foreach (Image img in symbolImages)
       img.DOFade(pinballFlashMinAlpha, pinballFlashHalfCycle).SetLoops(halfCycles, LoopType.Yoyo);
+    // Inverse of the symbol flash: starts dim and fades to full, so it's at min alpha exactly when
+    // the symbols are at full alpha, and vice versa.
     foreach (CanvasGroup cg in lineGroups)
-      cg.DOFade(pinballFlashMinAlpha, pinballFlashHalfCycle).SetLoops(halfCycles, LoopType.Yoyo);
+    {
+      cg.alpha = pinballFlashMinAlpha;
+      cg.DOFade(1f, pinballFlashHalfCycle).SetLoops(halfCycles, LoopType.Yoyo);
+    }
 
     yield return new WaitForSeconds(halfCycles * pinballFlashHalfCycle);
 
@@ -734,8 +756,13 @@ public class SlotBehaviour : MonoBehaviour
     foreach (Image img in symbolImages) { img.DOKill(); Color c = img.color; c.a = 1f; img.color = c; }
     foreach (CanvasGroup cg in lineGroups) { cg.DOKill(); cg.alpha = 1f; }
     foreach (int line in lines)
+    {
       if (PinballLineGraphics != null && line >= 0 && line < PinballLineGraphics.Count && PinballLineGraphics[line])
         PinballLineGraphics[line].SetActive(false);
+      // Restore the win panel so future normal per-payline win cycles show their amounts again.
+      if (PinballLineWinPanels != null && line >= 0 && line < PinballLineWinPanels.Count && PinballLineWinPanels[line])
+        PinballLineWinPanels[line].SetActive(true);
+    }
   }
 
   // Called by PinballBonusManager once the feature ends and the machine has scrolled back in.
@@ -756,7 +783,7 @@ public class SlotBehaviour : MonoBehaviour
     return TempImages[column].slotImages[row].gameObject;
   }
 
-  private IEnumerator CyclePaylines(List<int> lineIds, Dictionary<int, List<KeyValuePair<int, int>>> lineCoords)
+  private IEnumerator CyclePaylines(List<int> lineIds, Dictionary<int, List<KeyValuePair<int, int>>> lineCoords, bool loopIndividualLines = true)
   {
     // Phase 1: show every winning line together, all symbol animations playing at once.
     List<ImageAnimation> allAnims = new();
@@ -780,17 +807,19 @@ public class SlotBehaviour : MonoBehaviour
       if (PaylineGraphics.Count > id) PaylineGraphics[id].SetActive(false);
     foreach (var anim in allAnims) anim.StopAnimation();
 
-    // Phase 2: one winning line at a time, looping — only that line's symbols animate.
+    // Pinball-trigger spins only show the all-together phase above, then hand off to the pinball
+    // flash — no individual per-line cycle.
+    if (!loopIndividualLines) yield break;
+
+    // Phase 2: one winning line at a time, looping. Uses the special pinball line graphics (shown
+    // statically for the hold); the line's winning symbols still animate.
     while (true)
     {
       foreach (int id in lineIds)
       {
         List<ImageAnimation> lineAnims = new();
-        if (PaylineGraphics.Count > id)
-        {
-          PaylineGraphics[id].SetActive(true);
-          StartGameAnimation(PaylineGraphics[id]);
-        }
+        if (PinballLineGraphics != null && PinballLineGraphics.Count > id && PinballLineGraphics[id])
+          PinballLineGraphics[id].SetActive(true);
         foreach (var coord in lineCoords[id])
         {
           GameObject symbolObj = GetSlotImageGameObject(coord.Key, coord.Value);
@@ -799,14 +828,15 @@ public class SlotBehaviour : MonoBehaviour
           if (anim != null) lineAnims.Add(anim);
         }
         yield return new WaitForSeconds(paylineHoldDuration);
-        if (PaylineGraphics.Count > id) PaylineGraphics[id].SetActive(false);
+        if (PinballLineGraphics != null && PinballLineGraphics.Count > id && PinballLineGraphics[id])
+          PinballLineGraphics[id].SetActive(false);
         foreach (var anim in lineAnims) anim.StopAnimation();
       }
     }
   }
 
   //generate the payout lines generated
-  private void CheckPayoutLineBackend(List<int> LineId, double jackpot = 0)
+  private void CheckPayoutLineBackend(List<int> LineId, double jackpot = 0, bool willTriggerPinball = false)
   {
     if (LineId.Count > 0)
     {
@@ -838,7 +868,12 @@ public class SlotBehaviour : MonoBehaviour
           }
           lineCoords[LineId[j]] = coords;
         }
-        _paylineCycleCoroutine = StartCoroutine(CyclePaylines(sortedIds, lineCoords));
+        // Fill each winning line's own win-amount label (shown when it appears in the Phase-2 cycle).
+        foreach (var wl in SocketManager.ResultData.payload.winningLines)
+          if (PinballLineWinTexts != null && wl.lineIndex >= 0 && wl.lineIndex < PinballLineWinTexts.Count
+              && PinballLineWinTexts[wl.lineIndex])
+            PinballLineWinTexts[wl.lineIndex].text = TextFormat.ToSpriteDigits(wl.payout.ToString("F2"));
+        _paylineCycleCoroutine = StartCoroutine(CyclePaylines(sortedIds, lineCoords, !willTriggerPinball));
       }
     }
   }
