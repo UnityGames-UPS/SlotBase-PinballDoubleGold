@@ -102,7 +102,8 @@ public class PinballBonusManager : MonoBehaviour
   [SerializeField] private List<Image> bouncePegCircles = new List<Image>();
 
   [Header("Ring Animation Timing")]
-  [SerializeField] private float perCircleLightDuration = 0.12f;   // time per circle as the light travels (higher = slower ball)
+  [SerializeField] private float perCircleLightDuration = 0.05f;   // outer loop + outer reverse entry roll (higher = slower ball)
+  [SerializeField] private float perCircleLightDurationInner = 0.1f;   // inner-circle routing (marble approach + UFO routes)
   [SerializeField] private int outerTrailMax = 2;                  // circles lit ahead/behind the ball at the start of the outer loop; shrinks to 0 by the inner layer
   [SerializeField] private float marbleLandHold = 0.5f;            // hold after a marble is collected
   [SerializeField] private int prizeFlashCount = 4;                // flash pulses on the landed prize
@@ -348,11 +349,13 @@ public class PinballBonusManager : MonoBehaviour
     yield return LightOuterPathWithTrail();
     if (audioManager) audioManager.PlayBallEnteredInCircle();   // exits the outer ring, enters inner routing
 
-    // 2a. Chute — approach the marble entry, then collect marbles[selectedIndex] (it stays lit).
+    // 2a. Chute — approach the marble entry (top, near the jackpot), pass through every still-empty
+    // marble above the destination, then collect marbles[selectedIndex] (it stays lit).
     if (isChute)
     {
       yield return LightSequence(PickRoute(marbleApproachRoutes)?.circles);
       ClearLight();
+      yield return PassThroughMarblesAbove(selectedIndex);
       yield return CollectMarble(selectedIndex);
       yield break;
     }
@@ -449,7 +452,25 @@ public class PinballBonusManager : MonoBehaviour
     {
       if (!circle) continue;
       MoveLightTo(circle);
-      yield return new WaitForSeconds(perCircleLightDuration);
+      yield return new WaitForSeconds(perCircleLightDurationInner);
+    }
+  }
+
+  // The chute entrance sits at the top (by the jackpot marble). On the way down to destinationIndex,
+  // the ball passes every marble above it — all still empty, since the chute fills bottom-up — so each
+  // gets a momentary lit/unlit flash (base + board layer) rather than the permanent collected state.
+  private IEnumerator PassThroughMarblesAbove(int destinationIndex)
+  {
+    if (marbles == null) yield break;
+    for (int i = marbles.Count - 1; i > destinationIndex; i--)
+    {
+      Marble m = marbles[i];
+      if (m == null) continue;
+      if (m.image && marbleLitSprite) m.image.sprite = marbleLitSprite;
+      if (m.boardImage && m.boardLitSprite) m.boardImage.sprite = m.boardLitSprite;
+      yield return new WaitForSeconds(perCircleLightDurationInner);
+      if (m.image && marbleUnlitSprite) m.image.sprite = marbleUnlitSprite;
+      if (m.boardImage && m.boardUnlitSprite) m.boardImage.sprite = m.boardUnlitSprite;
     }
   }
 
