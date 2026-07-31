@@ -149,6 +149,8 @@ public class AudioManager : MonoBehaviour
         bgMusicSource.Play();
     }
 
+    internal void StopBonusBgMusic() => StopSource(bgMusicSource);
+
     internal void PlayThreePinballsFlash() => PlayOneShot(sfxSource, clipThreePinballsFlash);
     internal void PlayBallEnteredInCircle() => PlayOneShot(sfxSource, clipBallEnteredInCircle);
     internal void PlayBallHitting() => PlayOneShot(sfxSource, clipBallHitting);

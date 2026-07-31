@@ -292,6 +292,7 @@ public class PinballBonusManager : MonoBehaviour
     if (bonusStartButton) bonusStartButton.gameObject.SetActive(true);
 
     yield return StartCoroutine(TransitionFromBonus());
+    if (audioManager) audioManager.StopBonusBgMusic();
     // Scrolled back to the main game — hand the total to UIManager, which owns the win celebration
     // (panel + count-up + coin fountain). Fire-and-forget: it sets IsBonusWinActive, and StartSlots
     // blocks spins while that's true, so we don't need to wait here.
