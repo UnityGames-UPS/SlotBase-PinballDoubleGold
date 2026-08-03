@@ -478,7 +478,7 @@ public class SocketIOManager : MonoBehaviour
 
   private void RefreshUI()
   {
-    uiManager.InitialiseUI(InitialData.bets, UIData.paylines.symbols);
+    uiManager.InitialiseUI(InitialData.bets, UIData.paylines.symbols, GameFeatures?.anyPayouts, GameFeatures?.baseCoinValue ?? 1);
   }
 
   private void PopulateSlotSocket(List<string> LineIds)

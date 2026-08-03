@@ -73,6 +73,8 @@ public class UIManager : MonoBehaviour
   private List<double> betAmounts;
   internal int BetCount => betAmounts?.Count ?? 0;
   internal double GetBetAmount(int index) => betAmounts[index];
+  private Dictionary<string, double> anyPayouts;   // group-payout lookup for the "mixed" combination paytable texts
+  private double baseCoinValue = 1;   // anyPayouts values are 10x (baseCoinValue) too high against totalBet — confirmed live
   private readonly Dictionary<int, double> symbolPayoutMultipliers = new Dictionary<int, double>();
 
   [Header("Combination Payouts (paytable slide)")]
@@ -496,9 +498,11 @@ public class UIManager : MonoBehaviour
     _balanceTween = DOTween.To(() => current, v => { current = v; if (BalanceAmount) BalanceAmount.text = current.ToString("F3"); }, to, 0.8f);
   }
 
-  internal void InitialiseUI(List<double> bets, List<Symbol> symbols)
+  internal void InitialiseUI(List<double> bets, List<Symbol> symbols, Dictionary<string, double> anyPayouts = null, double baseCoinValue = 1)
   {
     betAmounts = bets;
+    this.anyPayouts = anyPayouts;
+    this.baseCoinValue = baseCoinValue > 0 ? baseCoinValue : 1;
 
     symbolPayoutMultipliers.Clear();
     if (symbols != null)
@@ -510,7 +514,7 @@ public class UIManager : MonoBehaviour
   {
     UpdateBetDisplay(totalBet);
     if (PinballPayoutText) PinballPayoutText.text = (totalBet * 500).ToString("F2");
-    if (SevenSevenSevenPayoutText) SevenSevenSevenPayoutText.text = (totalBet * 2000).ToString("F2");
+    if (SevenSevenSevenPayoutText) SevenSevenSevenPayoutText.text = (totalBet * 2000 / baseCoinValue).ToString("F2");
     UpdateSymbolPayoutTexts(totalBet);
   }
 
@@ -523,14 +527,27 @@ public class UIManager : MonoBehaviour
     SetSymbolPayoutText(Triple5BarPayoutText, 4, totalBet);
     SetSymbolPayoutText(TripleBarPayoutText, 5, totalBet);
 
-    // Double Gold Jackpot: totalBet x 2000, flat (not a per-symbol payout lookup).
-    if (TripleDouble7PayoutText) TripleDouble7PayoutText.text = (totalBet * 2000).ToString("F2");
+    // Double Gold Jackpot: totalBet x 2000, flat (not a per-symbol payout lookup); / baseCoinValue like
+    // the Mixed combos below — same underlying "bet amount 10" ambiguity caused both bugs.
+    if (TripleDouble7PayoutText) TripleDouble7PayoutText.text = (totalBet * 2000 / baseCoinValue).ToString("F2");
 
-    // TODO (populate step): these three need values the per-symbol payout can't provide —
-    //   MixedSevens     -> anyPayouts["sevens"]  * totalBet
-    //   MixedBars       -> anyPayouts["bars"]    * totalBet
-    //   MixedSevensBars -> anyPayouts["default"] * totalBet
-    // anyPayouts isn't plumbed into UIManager yet, so these are left unset for now.
+    // Mixed combos: group-level payout, not tied to one symbol id.
+    SetAnyPayoutText(MixedSevensPayoutText, totalBet, "sevens");
+    SetAnyPayoutText(MixedBarsPayoutText, totalBet, "bars");
+    // Live payload echoes this key as "defaults" (plural); the static config calls it "default" —
+    // try both so either shape works.
+    SetAnyPayoutText(MixedSevensBarsPayoutText, totalBet, "defaults", "default");
+  }
+
+  private void SetAnyPayoutText(TMP_Text text, double totalBet, params string[] keys)
+  {
+    if (text == null || anyPayouts == null) return;
+    foreach (string key in keys)
+      if (anyPayouts.TryGetValue(key, out double value))
+      {
+        text.text = (value * totalBet / baseCoinValue).ToString("F2");
+        return;
+      }
   }
 
   private void SetSymbolPayoutText(TMP_Text text, int symbolId, double totalBet)

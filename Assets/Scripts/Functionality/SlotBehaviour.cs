@@ -378,7 +378,7 @@ public class SlotBehaviour : MonoBehaviour
     currentBalance = SocketManager.PlayerData.balance;
     currentTotalBet = SocketManager.InitialData.bets[BetCounter] * betMultiplier;
     CompareBalance();
-    uiManager.InitialiseUI(SocketManager.InitialData.bets, SocketManager.UIData.paylines.symbols);
+    uiManager.InitialiseUI(SocketManager.InitialData.bets, SocketManager.UIData.paylines.symbols, SocketManager.GameFeatures?.anyPayouts, SocketManager.GameFeatures?.baseCoinValue ?? 1);
     uiManager.SetBet(currentTotalBet);
     // Game has connected — enable the buttons (they start disabled in Awake). This is the one thing
     // the old intro sequence used to do at its end; the intro itself has been removed.
